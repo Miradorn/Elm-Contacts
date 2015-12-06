@@ -1,0 +1,56 @@
+Elm.Category = Elm.Category || {};
+Elm.Category.make = function (_elm) {
+   "use strict";
+   _elm.Category = _elm.Category || {};
+   if (_elm.Category.values) return _elm.Category.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Input$Field = Elm.Graphics.Input.Field.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var countStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
+                                                   ,{ctor: "_Tuple2",_0: "font-family",_1: "monospace"}
+                                                   ,{ctor: "_Tuple2",_0: "display",_1: "inline-block"}
+                                                   ,{ctor: "_Tuple2",_0: "width",_1: "50px"}
+                                                   ,{ctor: "_Tuple2",_0: "text-align",_1: "center"}]));
+   var update = F2(function (action,model) {
+      var _p0 = action;
+      if (_p0.ctor === "UpdateName") {
+            return _U.update(model,{name: _p0._0});
+         } else {
+            return _U.update(model,{color: _p0._0});
+         }
+   });
+   var Context = F2(function (a,b) {    return {actions: a,remove: b};});
+   var UpdateColor = function (a) {    return {ctor: "UpdateColor",_0: a};};
+   var colorUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,UpdateColor(content));});
+   var UpdateName = function (a) {    return {ctor: "UpdateName",_0: a};};
+   var nameUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,UpdateName(content));});
+   var view = F2(function (context,model) {
+      var color = model.color.string;
+      var colorContent = A2($Graphics$Input$Field.Content,color,model.color.selection);
+      var colorField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,colorUpdateMessage(context.actions),"Color",colorContent);
+      var name = model.name.string;
+      var nameContent = A2($Graphics$Input$Field.Content,name,model.name.selection);
+      var nameField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,nameUpdateMessage(context.actions),"Name",nameContent);
+      return A2($Html.li,
+      _U.list([]),
+      _U.list([$Html.fromElement(nameField)
+              ,$Html.fromElement(colorField)
+              ,$Html.text(A2($Basics._op["++"],"Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))
+              ,A2($Html.button,_U.list([A2($Html$Events.onClick,context.remove,{ctor: "_Tuple0"})]),_U.list([$Html.text("X")]))]));
+   });
+   var init = F2(function (name,color) {
+      var emptySelection = A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward);
+      return {name: A2($Graphics$Input$Field.Content,name,emptySelection),color: A2($Graphics$Input$Field.Content,color,emptySelection)};
+   });
+   var Model = F2(function (a,b) {    return {name: a,color: b};});
+   return _elm.Category.values = {_op: _op,init: init,update: update,view: view,Model: Model,Context: Context};
+};
