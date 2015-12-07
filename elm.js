@@ -10865,7 +10865,7 @@ Elm.Category.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $String = Elm.String.make(_elm);
    var _op = {};
-   var withContent = F2(function (query,category) {
+   var hasContent = F2(function (query,category) {
       return A2($String.contains,query,category.name.string) || A2($String.contains,query,category.color.string);
    });
    var countStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
@@ -10900,12 +10900,14 @@ Elm.Category.make = function (_elm) {
               ,$Html.text(A2($Basics._op["++"],"Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))
               ,A2($Html.button,_U.list([A2($Html$Events.onClick,context.remove,{ctor: "_Tuple0"})]),_U.list([$Html.text("X")]))]));
    });
-   var init = F2(function (name,color) {
+   var init = F3(function (name,color,id) {
       var emptySelection = A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward);
-      return {name: A2($Graphics$Input$Field.Content,name,emptySelection),color: A2($Graphics$Input$Field.Content,color,emptySelection)};
+      return {name: A2($Graphics$Input$Field.Content,name,emptySelection)
+             ,color: A2($Graphics$Input$Field.Content,color,emptySelection)
+             ,id: A2($Debug.watch,"newId",id)};
    });
-   var Model = F2(function (a,b) {    return {name: a,color: b};});
-   return _elm.Category.values = {_op: _op,init: init,update: update,view: view,withContent: withContent,Model: Model,Context: Context};
+   var Model = F3(function (a,b,c) {    return {name: a,color: b,id: c};});
+   return _elm.Category.values = {_op: _op,init: init,update: update,view: view,hasContent: hasContent,Model: Model,Context: Context};
 };
 Elm.ContactBook = Elm.ContactBook || {};
 Elm.ContactBook.make = function (_elm) {
@@ -10925,36 +10927,29 @@ Elm.ContactBook.make = function (_elm) {
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var testContainment = F2(function (query,_p0) {    var _p1 = _p0;return A2($Category.withContent,query,_p1._1);});
    var countStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
                                                    ,{ctor: "_Tuple2",_0: "font-family",_1: "monospace"}
                                                    ,{ctor: "_Tuple2",_0: "display",_1: "inline-block"}
                                                    ,{ctor: "_Tuple2",_0: "width",_1: "50px"}
                                                    ,{ctor: "_Tuple2",_0: "text-align",_1: "center"}]));
    var update = F2(function (action,model) {
-      var _p2 = action;
-      switch (_p2.ctor)
-      {case "Insert": var newCategory = {ctor: "_Tuple2",_0: model.nextID,_1: A2($Category.init,"new","category")};
+      var _p0 = action;
+      switch (_p0.ctor)
+      {case "Insert": var newCategory = A3($Category.init,"new","category",model.nextID);
            var newCategories = A2($Basics._op["++"],model.categories,_U.list([newCategory]));
            return _U.update(model,{categories: newCategories,nextID: model.nextID + 1});
-         case "Filter": return _U.update(model,{filterQuery: _p2._0});
-         case "Remove": return _U.update(model,
-           {categories: A2($List.filter,function (_p3) {    var _p4 = _p3;return !_U.eq(_p4._0,_p2._0);},model.categories)});
-         default: var updateCat = function (_p5) {
-              var _p6 = _p5;
-              var _p8 = _p6._1;
-              var _p7 = _p6._0;
-              return _U.eq(_p7,_p2._0) ? {ctor: "_Tuple2",_0: _p7,_1: A2($Category.update,_p2._1,_p8)} : {ctor: "_Tuple2",_0: _p7,_1: _p8};
+         case "Filter": return _U.update(model,{filterQuery: _p0._0});
+         case "Remove": return _U.update(model,{categories: A2($List.filter,function (cat) {    return !_U.eq(_p0._0,cat.id);},model.categories)});
+         default: var updateCat = function (categoryModel) {
+              return _U.eq(categoryModel.id,_p0._0) ? A2($Category.update,_p0._1,categoryModel) : categoryModel;
            };
            return _U.update(model,{categories: A2($List.map,updateCat,model.categories)});}
    });
    var Modify = F2(function (a,b) {    return {ctor: "Modify",_0: a,_1: b};});
    var Remove = function (a) {    return {ctor: "Remove",_0: a};};
-   var viewCategory = F2(function (address,_p9) {
-      var _p10 = _p9;
-      var _p11 = _p10._0;
-      var context = A2($Category.Context,A2($Signal.forwardTo,address,Modify(_p11)),A2($Signal.forwardTo,address,$Basics.always(Remove(_p11))));
-      return A2($Category.view,context,_p10._1);
+   var viewCategory = F2(function (address,model) {
+      var context = A2($Category.Context,A2($Signal.forwardTo,address,Modify(model.id)),A2($Signal.forwardTo,address,$Basics.always(Remove(model.id))));
+      return A2($Category.view,context,model);
    });
    var Filter = function (a) {    return {ctor: "Filter",_0: a};};
    var queryUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,Filter(content));});
@@ -10962,7 +10957,7 @@ Elm.ContactBook.make = function (_elm) {
    var view = F2(function (address,model) {
       var filterField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,queryUpdateMessage(address),"Search",model.filterQuery);
       var insert = A2($Html.button,_U.list([A2($Html$Events.onClick,address,Insert)]),_U.list([$Html.text("Add")]));
-      var filteredCategories = A2($List.filter,testContainment(model.filterQuery.string),model.categories);
+      var filteredCategories = A2($List.filter,$Category.hasContent(model.filterQuery.string),model.categories);
       var categories = A2($List.map,viewCategory(address),filteredCategories);
       return A2($Html.div,_U.list([]),_U.list([insert,$Html.fromElement(filterField),A2($Html.ul,_U.list([]),categories)]));
    });
@@ -10981,8 +10976,7 @@ Elm.ContactBook.make = function (_elm) {
                                     ,view: view
                                     ,queryUpdateMessage: queryUpdateMessage
                                     ,viewCategory: viewCategory
-                                    ,countStyle: countStyle
-                                    ,testContainment: testContainment};
+                                    ,countStyle: countStyle};
 };
 Elm.Main = Elm.Main || {};
 Elm.Main.make = function (_elm) {

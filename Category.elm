@@ -1,4 +1,4 @@
-module Category (Model, init, Action, update, view, Context, withContent) where
+module Category (Model, init, Action, update, view, Context, hasContent) where
 
 import Html exposing (..)
 import Html.Attributes exposing (style)
@@ -13,16 +13,20 @@ import String
 type alias Model =
   { name : Content
   , color : Content
+  , id : ID
   }
 
-init: String -> String -> Model
-init name color =
+init: String -> String -> ID-> Model
+init name color id =
   let
     emptySelection = Selection 0 0 Forward
   in
     { name = Content name emptySelection
     , color = Content color emptySelection
+    , id = Debug.watch "newId" id
     }
+
+type alias ID = Int
 -- UPDATE
 
 type Action
@@ -83,7 +87,7 @@ countStyle =
     ]
 
 -- HELPERS
-withContent : String -> Model -> Bool
-withContent query category =
+hasContent : String -> Model -> Bool
+hasContent query category =
   String.contains query category.name.string
   || String.contains query category.color.string

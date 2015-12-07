@@ -12,7 +12,7 @@ import Category
 -- MODEL
 
 type alias Model =
-  { categories : List ( ID, Category.Model)
+  { categories : List Category.Model
   , nextID : ID
   , filterQuery : Content
   }
@@ -21,25 +21,25 @@ type alias ID = Int
 
 init : Model
 init =
-    { categories = []
-    , nextID = 0
-    , filterQuery = Content "" (Selection 0 0 Forward)
-    }
+  { categories = []
+  , nextID = 0
+  , filterQuery = Content "" (Selection 0 0 Forward)
+  }
 
 -- UPDATE
 
 type Action
-      = Insert
-      | Filter Content
-      | Remove ID
-      | Modify ID Category.Action
+  = Insert
+  | Filter Content
+  | Remove ID
+  | Modify ID Category.Action
 
 update : Action -> Model -> Model
 update action model =
   case action of
     Insert ->
       let
-        newCategory = ( model.nextID, Category.init "new" "category" )
+        newCategory = ( Category.init "new" "category" model.nextID )
         newCategories = model.categories ++ [ newCategory ]
       in
         { model |
@@ -50,14 +50,14 @@ update action model =
       { model | filterQuery = content }
     Remove id ->
       { model |
-          categories = List.filter (\(counterID, _) -> counterID /= id) model.categories
+          categories = List.filter (\(cat) -> id /= cat.id) model.categories
       }
     Modify id categoryAction->
-      let updateCat (catID, categoryModel) =
-        if catID == id then
-          (catID, Category.update categoryAction categoryModel)
+      let updateCat categoryModel =
+        if categoryModel.id == id then
+          Category.update categoryAction categoryModel
         else
-          (catID, categoryModel)
+          categoryModel
       in
           { model | categories = List.map updateCat model.categories }
 
@@ -67,7 +67,7 @@ update action model =
 view : Signal.Address Action -> Model -> Html
 view address model =
   let
-    filteredCategories = List.filter (testContainment model.filterQuery.string) model.categories
+    filteredCategories = List.filter (Category.hasContent model.filterQuery.string) model.categories
     categories = List.map (viewCategory address) filteredCategories
     insert = button [ onClick address Insert ] [ text "Add" ]
     filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
@@ -82,12 +82,12 @@ queryUpdateMessage : Signal.Address Action -> Content -> Signal.Message
 queryUpdateMessage address content =
   Signal.message address (Filter content)
 
-viewCategory : Signal.Address Action -> (ID, Category.Model) -> Html
-viewCategory address (id, model) =
+viewCategory : Signal.Address Action -> Category.Model -> Html
+viewCategory address model =
   let
     context = Category.Context
-      ( Signal.forwardTo address ( Modify id))
-      ( Signal.forwardTo address ( always (Remove id)))
+      ( Signal.forwardTo address ( Modify model.id))
+      ( Signal.forwardTo address ( always (Remove model.id)))
   in
     Category.view context model
 
@@ -102,6 +102,3 @@ countStyle =
     ]
 
 -- HELPERS
-testContainment : String -> (ID, Category.Model) -> Bool
-testContainment query (id, category) =
-  Category.withContent query category
