@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Json
+import Graphics.Input.Field exposing(..)
 import String
 import Category
 
@@ -13,6 +14,7 @@ import Category
 type alias Model =
   { categories : List ( ID, Category.Model)
   , nextID : ID
+  , filterQuery : Content
   }
 
 type alias ID = Int
@@ -21,13 +23,14 @@ init : Model
 init =
     { categories = []
     , nextID = 0
+    , filterQuery = Content "" (Selection 0 0 Forward)
     }
-
 
 -- UPDATE
 
 type Action
       = Insert
+      | Filter Content
       | Remove ID
       | Modify ID Category.Action
 
@@ -35,13 +38,16 @@ update : Action -> Model -> Model
 update action model =
   case action of
     Insert ->
-      let newCategory = ( model.nextID, Category.init "new" "category" )
-          newCategories = model.categories ++ [ newCategory ]
+      let
+        newCategory = ( model.nextID, Category.init "new" "category" )
+        newCategories = model.categories ++ [ newCategory ]
       in
-          { model |
-              categories = newCategories,
-              nextID = model.nextID + 1
-          }
+        { model |
+          categories = newCategories,
+          nextID = model.nextID + 1
+        }
+    Filter content ->
+      { model | filterQuery = content }
     Remove id ->
       { model |
           categories = List.filter (\(counterID, _) -> counterID /= id) model.categories
@@ -61,13 +67,20 @@ update action model =
 view : Signal.Address Action -> Model -> Html
 view address model =
   let
-    categories = List.map (viewCategory address) model.categories
+    filteredCategories = List.filter (testContainment model.filterQuery.string) model.categories
+    categories = List.map (viewCategory address) filteredCategories
     insert = button [ onClick address Insert ] [ text "Add" ]
+    filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
   in
-    div [] [  insert
-           , ul [] categories
-           ]
+    div []
+      [ insert
+      , fromElement filterField
+      , ul [] categories
+      ]
 
+queryUpdateMessage : Signal.Address Action -> Content -> Signal.Message
+queryUpdateMessage address content =
+  Signal.message address (Filter content)
 
 viewCategory : Signal.Address Action -> (ID, Category.Model) -> Html
 viewCategory address (id, model) =
@@ -87,3 +100,8 @@ countStyle =
     , ("width", "50px")
     , ("text-align", "center")
     ]
+
+-- HELPERS
+testContainment : String -> (ID, Category.Model) -> Bool
+testContainment query (id, category) =
+  Category.withContent query category

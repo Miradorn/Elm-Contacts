@@ -1,4 +1,4 @@
-module Category (Model, init, Action, update, view, Context, withContent) where
+module Contact (Model, init, Action, update, view, Context) where
 
 import Html exposing (..)
 import Html.Attributes exposing (style)
@@ -81,8 +81,3 @@ countStyle =
     , ("width", "50px")
     , ("text-align", "center")
     ]
-
--- HELPERS
-withContent : String -> Model -> Bool
-withContent query category =
-  String.contains query category.name.string
