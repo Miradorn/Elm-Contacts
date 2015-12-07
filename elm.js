@@ -10865,7 +10865,9 @@ Elm.Category.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $String = Elm.String.make(_elm);
    var _op = {};
-   var withContent = F2(function (query,category) {    return A2($String.contains,query,category.name.string);});
+   var withContent = F2(function (query,category) {
+      return A2($String.contains,query,category.name.string) || A2($String.contains,query,category.color.string);
+   });
    var countStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
                                                    ,{ctor: "_Tuple2",_0: "font-family",_1: "monospace"}
                                                    ,{ctor: "_Tuple2",_0: "display",_1: "inline-block"}

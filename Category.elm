@@ -86,3 +86,4 @@ countStyle =
 withContent : String -> Model -> Bool
 withContent query category =
   String.contains query category.name.string
+  || String.contains query category.color.string
