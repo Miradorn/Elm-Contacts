@@ -10,6 +10,8 @@ import String
 
 -- MODEL
 
+type alias ID = Int
+
 type alias Model =
   { name : Content
   , color : Content
@@ -23,7 +25,7 @@ init name color id =
   in
     { name = Content name emptySelection
     , color = Content color emptySelection
-    , id = Debug.watch "newId" id
+    , id = id
     }
 
 initWithTuple : ( String, String, ID ) -> Model
@@ -33,11 +35,10 @@ initWithTuple ( name, color, id ) =
   in
     { name = Content name emptySelection
     , color = Content color emptySelection
-    , id = Debug.watch "newId" id
+    , id = id
     }
 
 
-type alias ID = Int
 -- UPDATE
 
 type Action
@@ -64,12 +65,10 @@ view : Context -> Model -> Html
 view context model =
   let
     name = model.name.string
-    nameContent = Content name model.name.selection
-    nameField = field defaultStyle (nameUpdateMessage context.actions) "Name" nameContent
+    nameField = field defaultStyle (nameUpdateMessage context.actions) "Name" model.name
 
     color = model.color.string
-    colorContent = Content color model.color.selection
-    colorField = field defaultStyle (colorUpdateMessage context.actions) "Color" colorContent
+    colorField = field defaultStyle (colorUpdateMessage context.actions) "Color" model.color
   in
     li []
       [ fromElement nameField

@@ -1,4 +1,4 @@
-module Contact (Model, init, Action, update, view, Context) where
+module Contact (Model, init, Action, update, view) where
 
 import Html exposing (..)
 import Html.Attributes exposing (style)
@@ -12,49 +12,54 @@ import String
 
 type alias Model =
   { name : Content
-  , color : Content
+  , company : Content
+  , addresses : List Content
+  , phoneNumbers : List Content
+  , mailAdresses : List Content
   }
 
-init: String -> String -> Model
-init name color =
+
+init: String -> String -> List String -> List String -> List String -> Model
+init name company addresses phoneNumbers mailAdresses =
   let
     emptySelection = Selection 0 0 Forward
   in
     { name = Content name emptySelection
-    , color = Content color emptySelection
+    , company = Content company emptySelection
+    , addresses = List.map ( \address -> Content address emptySelection)  addresses
+    , phoneNumbers = List.map ( \number -> Content number emptySelection) phoneNumbers
+    , mailAdresses = List.map ( \address -> Content address emptySelection) mailAdresses
     }
 -- UPDATE
 
 type Action
   = UpdateName Content
-  | UpdateColor Content
+  | UpdateCompany Content
+  | Remove
 
-type alias Context =
-  { actions : Signal.Address Action
-  , remove : Signal.Address ()
-  }
+
 
 update : Action -> Model -> Model
 update action model =
   case action of
     UpdateName newName ->
       { model | name = newName }
-    UpdateColor newColor ->
-      { model | color = newColor }
+    UpdateCompany newCompany ->
+      { model | company = newCompany }
 
 
 -- VIEW
 
-view : Context -> Model -> Html
-view context model =
+view : Signal.Address Action -> Model -> Html
+view address model =
   let
     name = model.name.string
     nameContent = Content name model.name.selection
-    nameField = field defaultStyle (nameUpdateMessage context.actions) "Name" nameContent
+    nameField = field defaultStyle (nameUpdateMessage Signal.Address Action) "Name" name
 
     color = model.color.string
-    colorContent = Content color model.color.selection
-    colorField = field defaultStyle (colorUpdateMessage context.actions) "Color" colorContent
+    companyContent = Content color model.color.selection
+    colorField = field defaultStyle (colorUpdateMessage Signal.Address Action) "company" color
   in
     li []
       [ fromElement nameField
@@ -67,9 +72,9 @@ nameUpdateMessage : Signal.Address Action -> Content -> Signal.Message
 nameUpdateMessage address content =
   Signal.message address (UpdateName content)
 
-colorUpdateMessage : Signal.Address Action -> Content -> Signal.Message
-colorUpdateMessage address content =
-  Signal.message address (UpdateColor content)
+companyUpdateMessage : Signal.Address Action -> Content -> Signal.Message
+companyUpdateMessage address content =
+  Signal.message address (UpdateCompany content)
 
 
 countStyle : Attribute

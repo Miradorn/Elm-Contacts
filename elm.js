@@ -11550,12 +11550,10 @@ Elm.Category.make = function (_elm) {
    var UpdateName = function (a) {    return {ctor: "UpdateName",_0: a};};
    var nameUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,UpdateName(content));});
    var view = F2(function (context,model) {
+      var colorField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,colorUpdateMessage(context.actions),"Color",model.color);
       var color = model.color.string;
-      var colorContent = A2($Graphics$Input$Field.Content,color,model.color.selection);
-      var colorField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,colorUpdateMessage(context.actions),"Color",colorContent);
+      var nameField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,nameUpdateMessage(context.actions),"Name",model.name);
       var name = model.name.string;
-      var nameContent = A2($Graphics$Input$Field.Content,name,model.name.selection);
-      var nameField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,nameUpdateMessage(context.actions),"Name",nameContent);
       return A2($Html.li,
       _U.list([]),
       _U.list([$Html.fromElement(nameField)
@@ -11566,15 +11564,11 @@ Elm.Category.make = function (_elm) {
    var initWithTuple = function (_p1) {
       var _p2 = _p1;
       var emptySelection = A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward);
-      return {name: A2($Graphics$Input$Field.Content,_p2._0,emptySelection)
-             ,color: A2($Graphics$Input$Field.Content,_p2._1,emptySelection)
-             ,id: A2($Debug.watch,"newId",_p2._2)};
+      return {name: A2($Graphics$Input$Field.Content,_p2._0,emptySelection),color: A2($Graphics$Input$Field.Content,_p2._1,emptySelection),id: _p2._2};
    };
    var init = F3(function (name,color,id) {
       var emptySelection = A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward);
-      return {name: A2($Graphics$Input$Field.Content,name,emptySelection)
-             ,color: A2($Graphics$Input$Field.Content,color,emptySelection)
-             ,id: A2($Debug.watch,"newId",id)};
+      return {name: A2($Graphics$Input$Field.Content,name,emptySelection),color: A2($Graphics$Input$Field.Content,color,emptySelection),id: id};
    });
    var Model = F3(function (a,b,c) {    return {name: a,color: b,id: c};});
    return _elm.Category.values = {_op: _op
