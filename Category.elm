@@ -1,4 +1,4 @@
-module Category (Model, init, Action, update, view, Context, hasContent) where
+module Category (Model, init, initWithTuple, Action, update, view, Context, hasContent) where
 
 import Html exposing (..)
 import Html.Attributes exposing (style)
@@ -16,7 +16,7 @@ type alias Model =
   , id : ID
   }
 
-init: String -> String -> ID-> Model
+init : String -> String -> ID-> Model
 init name color id =
   let
     emptySelection = Selection 0 0 Forward
@@ -25,6 +25,17 @@ init name color id =
     , color = Content color emptySelection
     , id = Debug.watch "newId" id
     }
+
+initWithTuple : ( String, String, ID ) -> Model
+initWithTuple ( name, color, id ) =
+  let
+    emptySelection = Selection 0 0 Forward
+  in
+    { name = Content name emptySelection
+    , color = Content color emptySelection
+    , id = Debug.watch "newId" id
+    }
+
 
 type alias ID = Int
 -- UPDATE
