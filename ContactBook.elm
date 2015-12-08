@@ -9,14 +9,19 @@ import Effects exposing (Effects, Never)
 import Http
 import Task
 import String
-import Category
 
 
 -- MODEL
 importUrl = "https://contactsampleprovider.herokuapp.com"
 
+type alias Category =
+  { name : Content
+  , color : Content
+  , id : ID
+  }
+
 type alias Model =
-  { categories : List Category.Model
+  { categories : List Category
   , nextID : ID
   , filterQuery : Content
   }
@@ -30,6 +35,16 @@ init =
   , filterQuery = Content "" (Selection 0 0 Forward)
   }, Effects.none )
 
+
+initCategory : ( String, String, ID ) -> Category
+initCategory ( name, color, id ) =
+  let
+    emptySelection = Selection 0 0 Forward
+  in
+    { name = Content name emptySelection
+    , color = Content color emptySelection
+    , id = id
+    }
 -- UPDATE
 
 type Action
@@ -38,14 +53,15 @@ type Action
   | ProcessImport (Maybe (List (String, String, Int)))
   | Filter Content
   | Remove ID
-  | Modify ID Category.Action
+  | ModifyCategoryName ID Content
+  | ModifyCategoryColor ID Content
 
 update : Action -> Model -> ( Model, Effects Action )
 update action model =
   case action of
     Insert ->
       let
-        newCategory = ( Category.init "new" "category" model.nextID )
+        newCategory =  initCategory ((,,) "new" "category" model.nextID)
         newCategories = model.categories ++ [ newCategory ]
       in
         ({ model |
@@ -67,22 +83,29 @@ update action model =
       ({ model |
           categories = List.filter (\(cat) -> id /= cat.id) model.categories
       }, Effects.none)
-    Modify id categoryAction->
+    ModifyCategoryName id name->
       let updateCat categoryModel =
         if categoryModel.id == id then
-          Category.update categoryAction categoryModel
+          {categoryModel | name = name}
         else
           categoryModel
       in
           ({ model | categories = List.map updateCat model.categories }, Effects.none)
-
+    ModifyCategoryColor id color ->
+      let updateCat categoryModel =
+        if categoryModel.id == id then
+          {categoryModel | color = color}
+        else
+          categoryModel
+      in
+          ({ model | categories = List.map updateCat model.categories }, Effects.none)
 
 -- VIEW
 
 view : Signal.Address Action -> Model -> Html
 view address model =
   let
-    filteredCategories = List.filter (Category.hasContent model.filterQuery.string) model.categories
+    filteredCategories = List.filter (categoryHasContent model.filterQuery.string) model.categories
     categories = List.map (viewCategory address) filteredCategories
     insert = button [ onClick address Insert ] [ text "Add" ]
     importButton = button [ onClick address StartImport ] [ text "Import" ]
@@ -95,27 +118,34 @@ view address model =
       , ul [] categories
       ]
 
+viewCategory : Signal.Address Action -> Category -> Html
+viewCategory address category =
+  let
+    name = category.name.string
+    nameField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyCategoryName category.id))) "Name" category.name
+
+    color = category.color.string
+    colorField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyCategoryColor category.id))) "Color" category.color
+  in
+    li [ listStyle category.color.string ]
+      [ fromElement nameField
+      , fromElement colorField
+      , text ("Name: " ++ name ++ ", Color: " ++ color)
+      , button [onClick address (Remove category.id)] [ text "X" ]
+      ]
+
+
 queryUpdateMessage : Signal.Address Action -> Content -> Signal.Message
 queryUpdateMessage address content =
   Signal.message address (Filter content)
 
-viewCategory : Signal.Address Action -> Category.Model -> Html
-viewCategory address model =
-  let
-    context = Category.Context
-      ( Signal.forwardTo address ( Modify model.id))
-      ( Signal.forwardTo address ( always (Remove model.id)))
-  in
-    Category.view context model
 
-countStyle : Attribute
-countStyle =
+listStyle : String -> Attribute
+listStyle color =
   style
     [ ("font-size", "20px")
     , ("font-family", "monospace")
-    , ("display", "inline-block")
-    , ("width", "50px")
-    , ("text-align", "center")
+    , ("color", color)
     ]
 
 -- HELPERS
@@ -126,6 +156,12 @@ getContacts =
     |> Task.toMaybe
     |> Task.map ProcessImport
     |> Effects.task
+
+
+categoryHasContent : String -> Category -> Bool
+categoryHasContent query category =
+  String.contains query category.name.string
+  || String.contains query category.color.string
 
 -- DECODERS
 categoriesDecoder : Decoder (List (String, String, Int))
@@ -142,6 +178,6 @@ processImport : (List (String, String, Int)) -> (Model, Effects Action)
 processImport stuff =
   let
     (newModel, newAction) = init
-    newCategories = List.map Category.initWithTuple stuff
+    newCategories = List.map initCategory stuff
   in
     ({ newModel | categories = newCategories }, newAction)

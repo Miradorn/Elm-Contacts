@@ -76,6 +76,10 @@ companyUpdateMessage : Signal.Address Action -> Content -> Signal.Message
 companyUpdateMessage address content =
   Signal.message address (UpdateCompany content)
 
+hasContent : String -> Model -> Bool
+hasContent query contact =
+  String.contains query contact.name.string
+  || String.contains query contact.company.string
 
 countStyle : Attribute
 countStyle =

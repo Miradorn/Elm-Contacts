@@ -11510,76 +11510,6 @@ Elm.StartApp.make = function (_elm) {
    var Config = F4(function (a,b,c,d) {    return {init: a,update: b,view: c,inputs: d};});
    return _elm.StartApp.values = {_op: _op,start: start,Config: Config,App: App};
 };
-Elm.Category = Elm.Category || {};
-Elm.Category.make = function (_elm) {
-   "use strict";
-   _elm.Category = _elm.Category || {};
-   if (_elm.Category.values) return _elm.Category.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $Graphics$Input$Field = Elm.Graphics.Input.Field.make(_elm),
-   $Html = Elm.Html.make(_elm),
-   $Html$Attributes = Elm.Html.Attributes.make(_elm),
-   $Html$Events = Elm.Html.Events.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm),
-   $String = Elm.String.make(_elm);
-   var _op = {};
-   var hasContent = F2(function (query,category) {
-      return A2($String.contains,query,category.name.string) || A2($String.contains,query,category.color.string);
-   });
-   var countStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
-                                                   ,{ctor: "_Tuple2",_0: "font-family",_1: "monospace"}
-                                                   ,{ctor: "_Tuple2",_0: "display",_1: "inline-block"}
-                                                   ,{ctor: "_Tuple2",_0: "width",_1: "50px"}
-                                                   ,{ctor: "_Tuple2",_0: "text-align",_1: "center"}]));
-   var update = F2(function (action,model) {
-      var _p0 = action;
-      if (_p0.ctor === "UpdateName") {
-            return _U.update(model,{name: _p0._0});
-         } else {
-            return _U.update(model,{color: _p0._0});
-         }
-   });
-   var Context = F2(function (a,b) {    return {actions: a,remove: b};});
-   var UpdateColor = function (a) {    return {ctor: "UpdateColor",_0: a};};
-   var colorUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,UpdateColor(content));});
-   var UpdateName = function (a) {    return {ctor: "UpdateName",_0: a};};
-   var nameUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,UpdateName(content));});
-   var view = F2(function (context,model) {
-      var colorField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,colorUpdateMessage(context.actions),"Color",model.color);
-      var color = model.color.string;
-      var nameField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,nameUpdateMessage(context.actions),"Name",model.name);
-      var name = model.name.string;
-      return A2($Html.li,
-      _U.list([]),
-      _U.list([$Html.fromElement(nameField)
-              ,$Html.fromElement(colorField)
-              ,$Html.text(A2($Basics._op["++"],"Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))
-              ,A2($Html.button,_U.list([A2($Html$Events.onClick,context.remove,{ctor: "_Tuple0"})]),_U.list([$Html.text("X")]))]));
-   });
-   var initWithTuple = function (_p1) {
-      var _p2 = _p1;
-      var emptySelection = A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward);
-      return {name: A2($Graphics$Input$Field.Content,_p2._0,emptySelection),color: A2($Graphics$Input$Field.Content,_p2._1,emptySelection),id: _p2._2};
-   };
-   var init = F3(function (name,color,id) {
-      var emptySelection = A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward);
-      return {name: A2($Graphics$Input$Field.Content,name,emptySelection),color: A2($Graphics$Input$Field.Content,color,emptySelection),id: id};
-   });
-   var Model = F3(function (a,b,c) {    return {name: a,color: b,id: c};});
-   return _elm.Category.values = {_op: _op
-                                 ,init: init
-                                 ,initWithTuple: initWithTuple
-                                 ,update: update
-                                 ,view: view
-                                 ,hasContent: hasContent
-                                 ,Model: Model
-                                 ,Context: Context};
-};
 Elm.ContactBook = Elm.ContactBook || {};
 Elm.ContactBook.make = function (_elm) {
    "use strict";
@@ -11587,7 +11517,6 @@ Elm.ContactBook.make = function (_elm) {
    if (_elm.ContactBook.values) return _elm.ContactBook.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
-   $Category = Elm.Category.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
    $Graphics$Input$Field = Elm.Graphics.Input.Field.make(_elm),
@@ -11600,6 +11529,7 @@ Elm.ContactBook.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
+   $String = Elm.String.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
    var categoryDecoder = A4($Json$Decode.object3,
@@ -11608,16 +11538,36 @@ Elm.ContactBook.make = function (_elm) {
    A2($Json$Decode._op[":="],"color",$Json$Decode.string),
    A2($Json$Decode._op[":="],"id",$Json$Decode.$int));
    var categoriesDecoder = A2($Json$Decode.at,_U.list(["categories"]),$Json$Decode.list(categoryDecoder));
-   var countStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
-                                                   ,{ctor: "_Tuple2",_0: "font-family",_1: "monospace"}
-                                                   ,{ctor: "_Tuple2",_0: "display",_1: "inline-block"}
-                                                   ,{ctor: "_Tuple2",_0: "width",_1: "50px"}
-                                                   ,{ctor: "_Tuple2",_0: "text-align",_1: "center"}]));
-   var Modify = F2(function (a,b) {    return {ctor: "Modify",_0: a,_1: b};});
+   var categoryHasContent = F2(function (query,category) {
+      return A2($String.contains,query,category.name.string) || A2($String.contains,query,category.color.string);
+   });
+   var listStyle = function (color) {
+      return $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
+                                            ,{ctor: "_Tuple2",_0: "font-family",_1: "monospace"}
+                                            ,{ctor: "_Tuple2",_0: "color",_1: color}]));
+   };
+   var ModifyCategoryColor = F2(function (a,b) {    return {ctor: "ModifyCategoryColor",_0: a,_1: b};});
+   var ModifyCategoryName = F2(function (a,b) {    return {ctor: "ModifyCategoryName",_0: a,_1: b};});
    var Remove = function (a) {    return {ctor: "Remove",_0: a};};
-   var viewCategory = F2(function (address,model) {
-      var context = A2($Category.Context,A2($Signal.forwardTo,address,Modify(model.id)),A2($Signal.forwardTo,address,$Basics.always(Remove(model.id))));
-      return A2($Category.view,context,model);
+   var viewCategory = F2(function (address,category) {
+      var colorField = A4($Graphics$Input$Field.field,
+      $Graphics$Input$Field.defaultStyle,
+      $Signal.message(A2($Signal.forwardTo,address,ModifyCategoryColor(category.id))),
+      "Color",
+      category.color);
+      var color = category.color.string;
+      var nameField = A4($Graphics$Input$Field.field,
+      $Graphics$Input$Field.defaultStyle,
+      $Signal.message(A2($Signal.forwardTo,address,ModifyCategoryName(category.id))),
+      "Name",
+      category.name);
+      var name = category.name.string;
+      return A2($Html.li,
+      _U.list([listStyle(category.color.string)]),
+      _U.list([$Html.fromElement(nameField)
+              ,$Html.fromElement(colorField)
+              ,$Html.text(A2($Basics._op["++"],"Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))
+              ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,Remove(category.id))]),_U.list([$Html.text("X")]))]));
    });
    var Filter = function (a) {    return {ctor: "Filter",_0: a};};
    var queryUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,Filter(content));});
@@ -11628,7 +11578,7 @@ Elm.ContactBook.make = function (_elm) {
       var filterField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,queryUpdateMessage(address),"Search",model.filterQuery);
       var importButton = A2($Html.button,_U.list([A2($Html$Events.onClick,address,StartImport)]),_U.list([$Html.text("Import")]));
       var insert = A2($Html.button,_U.list([A2($Html$Events.onClick,address,Insert)]),_U.list([$Html.text("Add")]));
-      var filteredCategories = A2($List.filter,$Category.hasContent(model.filterQuery.string),model.categories);
+      var filteredCategories = A2($List.filter,categoryHasContent(model.filterQuery.string),model.categories);
       var categories = A2($List.map,viewCategory(address),filteredCategories);
       return A2($Html.div,
       _U.list([]),
@@ -11637,62 +11587,79 @@ Elm.ContactBook.make = function (_elm) {
               ,A2($Html.div,_U.list([]),_U.list([insert]))
               ,A2($Html.ul,_U.list([]),categories)]));
    });
+   var initCategory = function (_p0) {
+      var _p1 = _p0;
+      var emptySelection = A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward);
+      return {name: A2($Graphics$Input$Field.Content,_p1._0,emptySelection),color: A2($Graphics$Input$Field.Content,_p1._1,emptySelection),id: _p1._2};
+   };
    var init = {ctor: "_Tuple2"
               ,_0: {categories: _U.list([])
                    ,nextID: 0
                    ,filterQuery: A2($Graphics$Input$Field.Content,"",A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward))}
               ,_1: $Effects.none};
    var processImport = function (stuff) {
-      var newCategories = A2($List.map,$Category.initWithTuple,stuff);
-      var _p0 = init;
-      var newModel = _p0._0;
-      var newAction = _p0._1;
+      var newCategories = A2($List.map,initCategory,stuff);
+      var _p2 = init;
+      var newModel = _p2._0;
+      var newAction = _p2._1;
       return {ctor: "_Tuple2",_0: _U.update(newModel,{categories: newCategories}),_1: newAction};
    };
    var Model = F3(function (a,b,c) {    return {categories: a,nextID: b,filterQuery: c};});
+   var Category = F3(function (a,b,c) {    return {name: a,color: b,id: c};});
    var importUrl = "https://contactsampleprovider.herokuapp.com";
    var getContacts = $Effects.task(A2($Task.map,ProcessImport,$Task.toMaybe(A2($Http.get,categoriesDecoder,importUrl))));
    var update = F2(function (action,model) {
-      var _p1 = action;
-      switch (_p1.ctor)
-      {case "Insert": var newCategory = A3($Category.init,"new","category",model.nextID);
+      var _p3 = action;
+      switch (_p3.ctor)
+      {case "Insert": var newCategory = initCategory(A3(F3(function (v0,v1,v2) {    return {ctor: "_Tuple3",_0: v0,_1: v1,_2: v2};}),
+           "new",
+           "category",
+           model.nextID));
            var newCategories = A2($Basics._op["++"],model.categories,_U.list([newCategory]));
            return {ctor: "_Tuple2",_0: _U.update(model,{categories: newCategories,nextID: model.nextID + 1}),_1: $Effects.none};
          case "StartImport": return {ctor: "_Tuple2",_0: model,_1: getContacts};
          case "ProcessImport": var newModel = function () {
-              var _p2 = _p1._0;
-              if (_p2.ctor === "Just") {
-                    return processImport(_p2._0);
+              var _p4 = _p3._0;
+              if (_p4.ctor === "Just") {
+                    return processImport(_p4._0);
                  } else {
                     return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
                  }
            }();
            return newModel;
-         case "Filter": return {ctor: "_Tuple2",_0: _U.update(model,{filterQuery: _p1._0}),_1: $Effects.none};
+         case "Filter": return {ctor: "_Tuple2",_0: _U.update(model,{filterQuery: _p3._0}),_1: $Effects.none};
          case "Remove": return {ctor: "_Tuple2"
-                               ,_0: _U.update(model,{categories: A2($List.filter,function (cat) {    return !_U.eq(_p1._0,cat.id);},model.categories)})
+                               ,_0: _U.update(model,{categories: A2($List.filter,function (cat) {    return !_U.eq(_p3._0,cat.id);},model.categories)})
                                ,_1: $Effects.none};
+         case "ModifyCategoryName": var updateCat = function (categoryModel) {
+              return _U.eq(categoryModel.id,_p3._0) ? _U.update(categoryModel,{name: _p3._1}) : categoryModel;
+           };
+           return {ctor: "_Tuple2",_0: _U.update(model,{categories: A2($List.map,updateCat,model.categories)}),_1: $Effects.none};
          default: var updateCat = function (categoryModel) {
-              return _U.eq(categoryModel.id,_p1._0) ? A2($Category.update,_p1._1,categoryModel) : categoryModel;
+              return _U.eq(categoryModel.id,_p3._0) ? _U.update(categoryModel,{color: _p3._1}) : categoryModel;
            };
            return {ctor: "_Tuple2",_0: _U.update(model,{categories: A2($List.map,updateCat,model.categories)}),_1: $Effects.none};}
    });
    return _elm.ContactBook.values = {_op: _op
                                     ,importUrl: importUrl
+                                    ,Category: Category
                                     ,Model: Model
                                     ,init: init
+                                    ,initCategory: initCategory
                                     ,Insert: Insert
                                     ,StartImport: StartImport
                                     ,ProcessImport: ProcessImport
                                     ,Filter: Filter
                                     ,Remove: Remove
-                                    ,Modify: Modify
+                                    ,ModifyCategoryName: ModifyCategoryName
+                                    ,ModifyCategoryColor: ModifyCategoryColor
                                     ,update: update
                                     ,view: view
-                                    ,queryUpdateMessage: queryUpdateMessage
                                     ,viewCategory: viewCategory
-                                    ,countStyle: countStyle
+                                    ,queryUpdateMessage: queryUpdateMessage
+                                    ,listStyle: listStyle
                                     ,getContacts: getContacts
+                                    ,categoryHasContent: categoryHasContent
                                     ,categoriesDecoder: categoriesDecoder
                                     ,categoryDecoder: categoryDecoder
                                     ,processImport: processImport};

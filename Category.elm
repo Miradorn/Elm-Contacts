@@ -5,6 +5,7 @@ import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Graphics.Input.Field exposing(..)
 import Json.Decode as Json
+import Contact
 import String
 
 
