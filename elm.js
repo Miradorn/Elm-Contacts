@@ -11563,7 +11563,31 @@ Elm.ContactBook.make = function (_elm) {
                                             ,{ctor: "_Tuple2",_0: "color",_1: color}]));
    };
    var viewAddress = F2(function (address,addressContent) {    return $Html.text(addressContent.string);});
-   var viewContact = F2(function (address,contact) {    return A2($Html.li,_U.list([]),_U.list([$Html.text(contact.name.string)]));});
+   var ModifyContactCompany = F2(function (a,b) {    return {ctor: "ModifyContactCompany",_0: a,_1: b};});
+   var ModifyContactName = F2(function (a,b) {    return {ctor: "ModifyContactName",_0: a,_1: b};});
+   var viewContact = F2(function (address,contact) {
+      var companyField = A4($Graphics$Input$Field.field,
+      $Graphics$Input$Field.defaultStyle,
+      $Signal.message(A2($Signal.forwardTo,address,ModifyContactCompany(contact.id))),
+      "Name",
+      contact.company);
+      var company = contact.company.string;
+      var nameField = A4($Graphics$Input$Field.field,
+      $Graphics$Input$Field.defaultStyle,
+      $Signal.message(A2($Signal.forwardTo,address,ModifyContactName(contact.id))),
+      "Name",
+      contact.name);
+      var name = contact.name.string;
+      return A2($Html.li,
+      _U.list([]),
+      _U.list([A2($Html.div,
+              _U.list([]),
+              _U.list([$Html.text(A2($Basics._op["++"],
+              "name:",
+              A2($Basics._op["++"],contact.name.string,A2($Basics._op["++"],"company: ",contact.company.string))))]))
+              ,$Html.fromElement(nameField)
+              ,$Html.fromElement(companyField)]));
+   });
    var ModifyCategoryColor = F2(function (a,b) {    return {ctor: "ModifyCategoryColor",_0: a,_1: b};});
    var ModifyCategoryName = F2(function (a,b) {    return {ctor: "ModifyCategoryName",_0: a,_1: b};});
    var Remove = function (a) {    return {ctor: "Remove",_0: a};};
@@ -11584,9 +11608,11 @@ Elm.ContactBook.make = function (_elm) {
       _U.list([listStyle(category.color.string)]),
       _U.list([A2($Html.div,
               _U.list([]),
-              _U.list([$Html.fromElement(nameField)
+              _U.list([A2($Html.div,
+                      _U.list([]),
+                      _U.list([$Html.text(A2($Basics._op["++"],"Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))]))
+                      ,$Html.fromElement(nameField)
                       ,$Html.fromElement(colorField)
-                      ,$Html.text(A2($Basics._op["++"],"Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))
                       ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,Remove(category.id))]),_U.list([$Html.text("X")]))]))
               ,A2($Html.div,_U.list([]),_U.list([A2($Html.ul,_U.list([]),A2($List.map,viewContact(address),contacts))]))]));
    });
@@ -11606,7 +11632,7 @@ Elm.ContactBook.make = function (_elm) {
       },
       filteredCategories);
       return A2($Html.div,
-      _U.list([]),
+      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "background-color",_1: "black"}]))]),
       _U.list([A2($Html.div,_U.list([]),_U.list([importButton]))
               ,A2($Html.div,_U.list([]),_U.list([$Html.fromElement(filterField)]))
               ,A2($Html.div,_U.list([]),_U.list([insert]))
@@ -11687,10 +11713,18 @@ Elm.ContactBook.make = function (_elm) {
               return _U.eq(categoryModel.id,_p11._0) ? _U.update(categoryModel,{name: _p11._1}) : categoryModel;
            };
            return {ctor: "_Tuple2",_0: _U.update(model,{categories: A2($List.map,updateCat,model.categories)}),_1: $Effects.none};
-         default: var updateCat = function (categoryModel) {
+         case "ModifyCategoryColor": var updateCat = function (categoryModel) {
               return _U.eq(categoryModel.id,_p11._0) ? _U.update(categoryModel,{color: _p11._1}) : categoryModel;
            };
-           return {ctor: "_Tuple2",_0: _U.update(model,{categories: A2($List.map,updateCat,model.categories)}),_1: $Effects.none};}
+           return {ctor: "_Tuple2",_0: _U.update(model,{categories: A2($List.map,updateCat,model.categories)}),_1: $Effects.none};
+         case "ModifyContactName": var updateContact = function (contactModel) {
+              return _U.eq(contactModel.id,_p11._0) ? _U.update(contactModel,{name: _p11._1}) : contactModel;
+           };
+           return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};
+         default: var updateContact = function (contactModel) {
+              return _U.eq(contactModel.id,_p11._0) ? _U.update(contactModel,{company: _p11._1}) : contactModel;
+           };
+           return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};}
    });
    return _elm.ContactBook.values = {_op: _op
                                     ,importUrl: importUrl
@@ -11707,6 +11741,8 @@ Elm.ContactBook.make = function (_elm) {
                                     ,Remove: Remove
                                     ,ModifyCategoryName: ModifyCategoryName
                                     ,ModifyCategoryColor: ModifyCategoryColor
+                                    ,ModifyContactName: ModifyContactName
+                                    ,ModifyContactCompany: ModifyContactCompany
                                     ,update: update
                                     ,view: view
                                     ,viewCategory: viewCategory

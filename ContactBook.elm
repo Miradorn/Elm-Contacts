@@ -89,6 +89,8 @@ type Action
   | Remove ID
   | ModifyCategoryName ID Content
   | ModifyCategoryColor ID Content
+  | ModifyContactName ID Content
+  | ModifyContactCompany ID Content
 
 update : Action -> Model -> ( Model, Effects Action )
 update action model =
@@ -117,14 +119,14 @@ update action model =
       ({ model |
           categories = List.filter (\(cat) -> id /= cat.id) model.categories
       }, Effects.none)
-    ModifyCategoryName id name->
+    ModifyCategoryName id name ->
       let updateCat categoryModel =
         if categoryModel.id == id then
           {categoryModel | name = name}
         else
           categoryModel
       in
-          ({ model | categories = List.map updateCat model.categories }, Effects.none)
+        ({ model | categories = List.map updateCat model.categories }, Effects.none)
     ModifyCategoryColor id color ->
       let updateCat categoryModel =
         if categoryModel.id == id then
@@ -132,7 +134,23 @@ update action model =
         else
           categoryModel
       in
-          ({ model | categories = List.map updateCat model.categories }, Effects.none)
+        ({ model | categories = List.map updateCat model.categories }, Effects.none)
+    ModifyContactName id name ->
+      let updateContact contactModel =
+        if contactModel.id == id then
+          {contactModel | name = name}
+        else
+          contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
+    ModifyContactCompany id company ->
+      let updateContact contactModel =
+        if contactModel.id == id then
+          {contactModel | company = company}
+        else
+          contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
 
 -- VIEW
 
@@ -145,7 +163,7 @@ view address model =
     importButton = button [ onClick address StartImport ] [ text "Import" ]
     filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
   in
-    div []
+    div [style [("background-color", "black")]]
       [ div [] [ importButton ]
       , div [] [ fromElement filterField ]
       , div [] [ insert ]
@@ -163,9 +181,9 @@ viewCategory address category contacts =
   in
     li [ listStyle category.color.string ]
       [ div []
-        [ fromElement nameField
+        [ div [] [text ("Name: " ++ name ++ ", Color: " ++ color)]
+        , fromElement nameField
         , fromElement colorField
-        , text ("Name: " ++ name ++ ", Color: " ++ color)
         , button [onClick address (Remove category.id)] [ text "X" ]
         ]
       , div []
@@ -178,7 +196,18 @@ viewCategory address category contacts =
 
 viewContact : Signal.Address Action -> Contact -> Html
 viewContact address contact =
-  li [] [text contact.name.string]
+  let
+    name = contact.name.string
+    nameField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactName contact.id))) "Name" contact.name
+
+    company = contact.company.string
+    companyField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactCompany contact.id))) "Name" contact.company
+  in
+    li []
+      [ div [] [text ("name:" ++ contact.name.string ++ "company: " ++ contact.company.string) ]
+      , fromElement nameField
+      , fromElement companyField
+      ]
 
 viewAddress : Signal.Address Action -> Content -> Html
 viewAddress address addressContent =
