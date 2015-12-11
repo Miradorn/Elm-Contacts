@@ -30,12 +30,17 @@ type alias Category =
   , id : ID
   }
 
+type ViewMode
+  = Index
+  | ViewCategory Category
+
 type alias Model =
   { categories : List Category
   , nextCategoryID : ID
   , contacts : List Contact
   , nextContactID : ID
   , filterQuery : Content
+  , viewMode : ViewMode
   }
 
 type alias ID = Int
@@ -48,6 +53,7 @@ init =
     , nextCategoryID = 0
     , nextContactID = 0
     , filterQuery = Content "" (Selection 0 0 Forward)
+    , viewMode = Index
     }
   , Effects.none )
 
@@ -89,6 +95,7 @@ type Action
   | Remove ID
   | ModifyCategoryName ID Content
   | ModifyCategoryColor ID Content
+  | ShowCategory Category
   | ModifyContactName ID Content
   | ModifyContactCompany ID Content
 
@@ -135,6 +142,8 @@ update action model =
           categoryModel
       in
         ({ model | categories = List.map updateCat model.categories }, Effects.none)
+    ShowCategory category ->
+      ({model | viewMode = ViewCategory category}, Effects.none)
     ModifyContactName id name ->
       let updateContact contactModel =
         if contactModel.id == id then
@@ -156,9 +165,15 @@ update action model =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
+  case model.viewMode of
+    Index -> viewIndex address model
+    ViewCategory category -> viewCategory address category model
+
+viewIndex : Signal.Address Action -> Model -> Html
+viewIndex address model =
   let
     filteredCategories = List.filter (categoryHasContent model.filterQuery.string) model.categories
-    categories = List.map (\cat -> viewCategory address cat (contactsWithCategory model.contacts cat.id)) filteredCategories
+    categories = List.map (\cat -> viewForCategory address cat) filteredCategories
     insert = button [ onClick address Insert ] [ text "Add" ]
     importButton = button [ onClick address StartImport ] [ text "Import" ]
     filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
@@ -170,8 +185,8 @@ view address model =
       , ul [] categories
       ]
 
-viewCategory : Signal.Address Action -> Category -> List Contact -> Html
-viewCategory address category contacts =
+viewForCategory : Signal.Address Action -> Category -> Html
+viewForCategory address category =
   let
     name = category.name.string
     nameField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyCategoryName category.id))) "Name" category.name
@@ -185,17 +200,28 @@ viewCategory address category contacts =
         , fromElement nameField
         , fromElement colorField
         , button [onClick address (Remove category.id)] [ text "X" ]
-        ]
-      , div []
-        [ ul [] (List.map (viewContact address) contacts)
-
+        , button [onClick address (ShowCategory category)] [text "Show"]
         ]
      ]
 
+viewCategory : Signal.Address Action -> Category -> Model -> Html
+viewCategory address category model =
+  let
+    mappedContacts = contactsWithCategory model.contacts category.id
+    filteredContacts = List.filter (contactHasContent model.filterQuery.string) mappedContacts
+    contactsHtml = List.map (viewForContact address) filteredContacts
 
 
-viewContact : Signal.Address Action -> Contact -> Html
-viewContact address contact =
+    filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
+  in
+    div [ style [("background-color", "black"), ("color", category.color.string)] ]
+      [ h1 [] [text ("Category Name: " ++ category.name.string)]
+      , fromElement filterField
+      , ul [ listStyle category.color.string] contactsHtml
+      ]
+
+viewForContact : Signal.Address Action -> Contact -> Html
+viewForContact address contact =
   let
     name = contact.name.string
     nameField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactName contact.id))) "Name" contact.name
@@ -204,7 +230,7 @@ viewContact address contact =
     companyField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactCompany contact.id))) "Name" contact.company
   in
     li []
-      [ div [] [text ("name:" ++ contact.name.string ++ "company: " ++ contact.company.string) ]
+      [ div [] [text ("name:" ++ contact.name.string ++ ", company: " ++ contact.company.string) ]
       , fromElement nameField
       , fromElement companyField
       ]
@@ -225,6 +251,7 @@ listStyle color =
     [ ("font-size", "20px")
     , ("font-family", "monospace")
     , ("color", color)
+    , ("background-color", "black")
     ]
 
 -- HELPERS
@@ -274,6 +301,11 @@ categoryHasContent : String -> Category -> Bool
 categoryHasContent query category =
   String.contains (String.toLower query) (String.toLower category.name.string)
   || String.contains query category.color.string
+
+contactHasContent : String -> Contact -> Bool
+contactHasContent query contact =
+  String.contains (String.toLower query) (String.toLower contact.name.string)
+  || String.contains (String.toLower query) (String.toLower contact.company.string)
 
 -- DECODERS
 
