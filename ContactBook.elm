@@ -14,26 +14,6 @@ import String
 -- MODEL
 importUrl = "https://contactsampleprovider.herokuapp.com"
 
-type alias Contact =
-  { name : Content
-  , company : Content
-  , addresses : List Content
-  , phones : List Content
-  , emails : List Content
-  , category : ID
-  , id : ID
-  }
-
-type alias Category =
-  { name : Content
-  , color : Content
-  , id : ID
-  }
-
-type ViewMode
-  = Index
-  | ViewCategory Category
-
 type alias Model =
   { categories : List Category
   , nextCategoryID : ID
@@ -42,6 +22,33 @@ type alias Model =
   , filterQuery : Content
   , viewMode : ViewMode
   }
+
+type alias Category =
+  { name : Content
+  , color : Content
+  , id : ID
+  }
+
+type alias Contact =
+  { name : Content
+  , company : Content
+  , addresses : List ContactContent
+  , phones : List ContactContent
+  , emails : List ContactContent
+  , category : ID
+  , id : ID
+  }
+
+type alias ContactContent =
+  { text : Content
+  , id : ID
+  , contact : ID
+  }
+
+type ViewMode
+  = Index
+  | ViewCategory Category
+
 
 type alias ID = Int
 
@@ -72,9 +79,12 @@ initContact :  ID -> ContactImportType -> Contact
 initContact id ( name, company, addresses, phones, mails, category) =
   let
     emptySelection = Selection 0 0 Forward
-    newAddresses = List.map (\address -> Content address emptySelection) addresses
-    newPhones = List.map (\phones -> Content phones emptySelection) phones
-    newMails = List.map (\mail -> Content mail emptySelection) mails
+
+    contentInitializer = initContactContent id
+
+    newAddresses = List.indexedMap contentInitializer addresses
+    newPhones = List.indexedMap contentInitializer phones
+    newMails = List.indexedMap contentInitializer mails
   in
     { name = Content name emptySelection
     , company = Content company emptySelection
@@ -85,6 +95,12 @@ initContact id ( name, company, addresses, phones, mails, category) =
     , id = id
     }
 
+initContactContent :  ID -> ID -> String -> ContactContent
+initContactContent contact id text =
+  let
+    emptySelection = Selection 0 0 Forward
+  in
+    {id = id, contact = contact, text = Content text emptySelection }
 -- UPDATE
 
 type Action
@@ -95,7 +111,9 @@ type Action
   | Remove ID
   | ModifyCategoryName ID Content
   | ModifyCategoryColor ID Content
+  | ShowIndex
   | ShowCategory Category
+  | AddContact Category
   | ModifyContactName ID Content
   | ModifyContactCompany ID Content
 
@@ -142,8 +160,19 @@ update action model =
           categoryModel
       in
         ({ model | categories = List.map updateCat model.categories }, Effects.none)
+    ShowIndex ->
+      ({model | viewMode = Index}, Effects.none)
     ShowCategory category ->
       ({model | viewMode = ViewCategory category}, Effects.none)
+    AddContact category ->
+      let
+        newContact = initContact model.nextContactID ("", "", [], [], [], category.id)
+        newContacts =  [ newContact ] ++ model.contacts
+      in
+        ({ model
+          | contacts = newContacts
+          , nextContactID = model.nextContactID + 1
+        }, Effects.none)
     ModifyContactName id name ->
       let updateContact contactModel =
         if contactModel.id == id then
@@ -211,12 +240,16 @@ viewCategory address category model =
     filteredContacts = List.filter (contactHasContent model.filterQuery.string) mappedContacts
     contactsHtml = List.map (viewForContact address) filteredContacts
 
+    backButton = button [onClick address ShowIndex] [ text "Index"]
+    addButton = button [onClick address (AddContact category)] [ text "Add" ]
 
     filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
   in
     div [ style [("background-color", "black"), ("color", category.color.string)] ]
       [ h1 [] [text ("Category Name: " ++ category.name.string)]
       , fromElement filterField
+      , backButton
+      , addButton
       , ul [ listStyle category.color.string] contactsHtml
       ]
 
@@ -228,16 +261,33 @@ viewForContact address contact =
 
     company = contact.company.string
     companyField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactCompany contact.id))) "Name" contact.company
+
+    contentViewMapper = viewForContactContent address
+
+    addresses = List.map contentViewMapper contact.addresses
+    phones = List.map contentViewMapper contact.phones
+    mails = List.map contentViewMapper contact.emails
   in
     li []
       [ div [] [text ("name:" ++ contact.name.string ++ ", company: " ++ contact.company.string) ]
       , fromElement nameField
       , fromElement companyField
+      , ul []
+        [ text "Addresses"
+        , ul [] addresses
+        , text "Phone Numbers"
+        , ul [] phones
+        , text "Emails"
+        , ul [] mails
+        ]
+
+
       ]
 
-viewAddress : Signal.Address Action -> Content -> Html
-viewAddress address addressContent =
-  text addressContent.string
+viewForContactContent : Signal.Address Action -> ContactContent -> Html
+viewForContactContent address content =
+  li [] [ text (content.text.string ++ " id: " ++ (toString content.id)) ]
+
 
 queryUpdateMessage : Signal.Address Action -> Content -> Signal.Message
 queryUpdateMessage address content =
@@ -255,6 +305,22 @@ listStyle color =
     ]
 
 -- HELPERS
+
+contactsWithCategory : List Contact -> ID -> List Contact
+contactsWithCategory contacts categoryID =
+  List.filter (\contact -> contact.category == categoryID) contacts
+
+categoryHasContent : String -> Category -> Bool
+categoryHasContent query category =
+  String.contains (String.toLower query) (String.toLower category.name.string)
+  || String.contains query category.color.string
+
+contactHasContent : String -> Contact -> Bool
+contactHasContent query contact =
+  String.contains (String.toLower query) (String.toLower contact.name.string)
+  || String.contains (String.toLower query) (String.toLower contact.company.string)
+
+-- IMPORT
 
 getContacts : Effects Action
 getContacts =
@@ -283,29 +349,14 @@ processImport (importedCategories, importedContacts) =
     newContacts = List.map2 initContact indexRange importedContacts
     newNextContactID = List.length indexRange
   in
-    (
-    { newModel
-      | categories = newCategories
-      , nextCategoryID = catMaxId + 1
-      , contacts = newContacts
-      , nextContactID = newNextContactID
-    }
-      , newAction
-      )
-
-contactsWithCategory : List Contact -> ID -> List Contact
-contactsWithCategory contacts categoryID =
-  List.filter (\contact -> contact.category == categoryID) contacts
-
-categoryHasContent : String -> Category -> Bool
-categoryHasContent query category =
-  String.contains (String.toLower query) (String.toLower category.name.string)
-  || String.contains query category.color.string
-
-contactHasContent : String -> Contact -> Bool
-contactHasContent query contact =
-  String.contains (String.toLower query) (String.toLower contact.name.string)
-  || String.contains (String.toLower query) (String.toLower contact.company.string)
+    ( { newModel
+        | categories = newCategories
+        , nextCategoryID = catMaxId + 1
+        , contacts = newContacts
+        , nextContactID = newNextContactID
+      }
+    , newAction
+    )
 
 -- DECODERS
 
