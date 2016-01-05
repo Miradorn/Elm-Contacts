@@ -35,6 +35,9 @@ type alias Contact =
   , addresses : List ContactContent
   , phones : List ContactContent
   , emails : List ContactContent
+  , nextAddressID : ID
+  , nextPhoneID : ID
+  , nextMailID : ID
   , category : ID
   , id : ID
   }
@@ -83,8 +86,11 @@ initContact id ( name, company, addresses, phones, mails, category) =
     contentInitializer = initContactContent id
 
     newAddresses = List.indexedMap contentInitializer addresses
+    nextAddressID = List.length newAddresses
     newPhones = List.indexedMap contentInitializer phones
+    nextPhoneID = List.length newPhones
     newMails = List.indexedMap contentInitializer mails
+    nextMailID = List.length newMails
   in
     { name = Content name emptySelection
     , company = Content company emptySelection
@@ -92,6 +98,9 @@ initContact id ( name, company, addresses, phones, mails, category) =
     , phones = newPhones
     , emails = newMails
     , category = category
+    , nextMailID = nextMailID
+    , nextPhoneID = nextPhoneID
+    , nextAddressID = nextAddressID
     , id = id
     }
 
@@ -107,12 +116,12 @@ type Action
   = Insert
   | StartImport
   | ProcessImport (Maybe (List CategoryImportType, List ContactImportType))
-  | Filter Content
-  | Remove ID
-  | ModifyCategoryName ID Content
-  | ModifyCategoryColor ID Content
   | ShowIndex
   | ShowCategory Category
+  | Filter Content
+  | RemoveCategory ID
+  | ModifyCategoryName ID Content
+  | ModifyCategoryColor ID Content
   | AddContact Category
   | ModifyContactName ID Content
   | ModifyContactCompany ID Content
@@ -140,7 +149,7 @@ update action model =
         newModel
     Filter content ->
       ({ model | filterQuery = content }, Effects.none)
-    Remove id ->
+    RemoveCategory id ->
       ({ model |
           categories = List.filter (\(cat) -> id /= cat.id) model.categories
       }, Effects.none)
@@ -222,13 +231,15 @@ viewForCategory address category =
 
     color = category.color.string
     colorField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyCategoryColor category.id))) "Color" category.color
+
+    id = toString category.id
   in
     li [ listStyle category.color.string ]
       [ div []
-        [ div [] [text ("Name: " ++ name ++ ", Color: " ++ color)]
+        [ div [] [text ("ID: " ++ id ++ ", Name: " ++ name ++ ", Color: " ++ color)]
         , fromElement nameField
         , fromElement colorField
-        , button [onClick address (Remove category.id)] [ text "X" ]
+        , button [onClick address (RemoveCategory category.id)] [ text "X" ]
         , button [onClick address (ShowCategory category)] [text "Show"]
         ]
      ]
@@ -244,9 +255,11 @@ viewCategory address category model =
     addButton = button [onClick address (AddContact category)] [ text "Add" ]
 
     filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
+
+    id = toString category.id
   in
     div [ style [("background-color", "black"), ("color", category.color.string)] ]
-      [ h1 [] [text ("Category Name: " ++ category.name.string)]
+      [ h1 [] [text ("ID: " ++ id ++ " Category Name: " ++ category.name.string)]
       , fromElement filterField
       , backButton
       , addButton
@@ -286,7 +299,16 @@ viewForContact address contact =
 
 viewForContactContent : Signal.Address Action -> ContactContent -> Html
 viewForContactContent address content =
-  li [] [ text (content.text.string ++ " id: " ++ (toString content.id)) ]
+  let
+    contentField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactName content.id))) "What" content.text
+  in
+    li []
+      [ div []
+        [ fromElement contentField
+        , text (" id: " ++ (toString content.id))
+        ]
+      ]
+
 
 
 queryUpdateMessage : Signal.Address Action -> Content -> Signal.Message

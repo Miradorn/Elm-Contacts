@@ -11568,13 +11568,18 @@ Elm.ContactBook.make = function (_elm) {
                                             ,{ctor: "_Tuple2",_0: "color",_1: color}
                                             ,{ctor: "_Tuple2",_0: "background-color",_1: "black"}]));
    };
-   var viewForContactContent = F2(function (address,content) {
-      return A2($Html.li,
-      _U.list([]),
-      _U.list([$Html.text(A2($Basics._op["++"],content.text.string,A2($Basics._op["++"]," id: ",$Basics.toString(content.id))))]));
-   });
    var ModifyContactCompany = F2(function (a,b) {    return {ctor: "ModifyContactCompany",_0: a,_1: b};});
    var ModifyContactName = F2(function (a,b) {    return {ctor: "ModifyContactName",_0: a,_1: b};});
+   var viewForContactContent = F2(function (address,content) {
+      var contentField = A4($Graphics$Input$Field.field,
+      $Graphics$Input$Field.defaultStyle,
+      $Signal.message(A2($Signal.forwardTo,address,ModifyContactName(content.id))),
+      "What",
+      content.text);
+      return A2($Html.li,
+      _U.list([]),
+      _U.list([A2($Html.div,_U.list([]),_U.list([$Html.fromElement(contentField),$Html.text(A2($Basics._op["++"]," id: ",$Basics.toString(content.id)))]))]));
+   });
    var viewForContact = F2(function (address,contact) {
       var contentViewMapper = viewForContactContent(address);
       var addresses = A2($List.map,contentViewMapper,contact.addresses);
@@ -11611,12 +11616,14 @@ Elm.ContactBook.make = function (_elm) {
                       ,A2($Html.ul,_U.list([]),mails)]))]));
    });
    var AddContact = function (a) {    return {ctor: "AddContact",_0: a};};
-   var ShowCategory = function (a) {    return {ctor: "ShowCategory",_0: a};};
-   var ShowIndex = {ctor: "ShowIndex"};
    var ModifyCategoryColor = F2(function (a,b) {    return {ctor: "ModifyCategoryColor",_0: a,_1: b};});
    var ModifyCategoryName = F2(function (a,b) {    return {ctor: "ModifyCategoryName",_0: a,_1: b};});
-   var Remove = function (a) {    return {ctor: "Remove",_0: a};};
+   var RemoveCategory = function (a) {    return {ctor: "RemoveCategory",_0: a};};
+   var Filter = function (a) {    return {ctor: "Filter",_0: a};};
+   var queryUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,Filter(content));});
+   var ShowCategory = function (a) {    return {ctor: "ShowCategory",_0: a};};
    var viewForCategory = F2(function (address,category) {
+      var id = $Basics.toString(category.id);
       var colorField = A4($Graphics$Input$Field.field,
       $Graphics$Input$Field.defaultStyle,
       $Signal.message(A2($Signal.forwardTo,address,ModifyCategoryColor(category.id))),
@@ -11635,15 +11642,17 @@ Elm.ContactBook.make = function (_elm) {
       _U.list([]),
       _U.list([A2($Html.div,
               _U.list([]),
-              _U.list([$Html.text(A2($Basics._op["++"],"Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))]))
+              _U.list([$Html.text(A2($Basics._op["++"],
+              "ID: ",
+              A2($Basics._op["++"],id,A2($Basics._op["++"],", Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))))]))
               ,$Html.fromElement(nameField)
               ,$Html.fromElement(colorField)
-              ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,Remove(category.id))]),_U.list([$Html.text("X")]))
+              ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,RemoveCategory(category.id))]),_U.list([$Html.text("X")]))
               ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,ShowCategory(category))]),_U.list([$Html.text("Show")]))]))]));
    });
-   var Filter = function (a) {    return {ctor: "Filter",_0: a};};
-   var queryUpdateMessage = F2(function (address,content) {    return A2($Signal.message,address,Filter(content));});
+   var ShowIndex = {ctor: "ShowIndex"};
    var viewCategory = F3(function (address,category,model) {
+      var id = $Basics.toString(category.id);
       var filterField = A4($Graphics$Input$Field.field,$Graphics$Input$Field.defaultStyle,queryUpdateMessage(address),"Search",model.filterQuery);
       var addButton = A2($Html.button,_U.list([A2($Html$Events.onClick,address,AddContact(category))]),_U.list([$Html.text("Add")]));
       var backButton = A2($Html.button,_U.list([A2($Html$Events.onClick,address,ShowIndex)]),_U.list([$Html.text("Index")]));
@@ -11653,7 +11662,9 @@ Elm.ContactBook.make = function (_elm) {
       return A2($Html.div,
       _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "background-color",_1: "black"}
                                               ,{ctor: "_Tuple2",_0: "color",_1: category.color.string}]))]),
-      _U.list([A2($Html.h1,_U.list([]),_U.list([$Html.text(A2($Basics._op["++"],"Category Name: ",category.name.string))]))
+      _U.list([A2($Html.h1,
+              _U.list([]),
+              _U.list([$Html.text(A2($Basics._op["++"],"ID: ",A2($Basics._op["++"],id,A2($Basics._op["++"]," Category Name: ",category.name.string))))]))
               ,$Html.fromElement(filterField)
               ,backButton
               ,addButton
@@ -11691,8 +11702,11 @@ Elm.ContactBook.make = function (_elm) {
       var _p2 = _p1;
       var contentInitializer = initContactContent(id);
       var newAddresses = A2($List.indexedMap,contentInitializer,_p2._2);
+      var nextAddressID = $List.length(newAddresses);
       var newPhones = A2($List.indexedMap,contentInitializer,_p2._3);
+      var nextPhoneID = $List.length(newPhones);
       var newMails = A2($List.indexedMap,contentInitializer,_p2._4);
+      var nextMailID = $List.length(newMails);
       var emptySelection = A3($Graphics$Input$Field.Selection,0,0,$Graphics$Input$Field.Forward);
       return {name: A2($Graphics$Input$Field.Content,_p2._0,emptySelection)
              ,company: A2($Graphics$Input$Field.Content,_p2._1,emptySelection)
@@ -11700,6 +11714,9 @@ Elm.ContactBook.make = function (_elm) {
              ,phones: newPhones
              ,emails: newMails
              ,category: _p2._5
+             ,nextMailID: nextMailID
+             ,nextPhoneID: nextPhoneID
+             ,nextAddressID: nextAddressID
              ,id: id};
    });
    var initCategory = function (_p3) {
@@ -11735,7 +11752,27 @@ Elm.ContactBook.make = function (_elm) {
              ,_1: newAction};
    };
    var ContactContent = F3(function (a,b,c) {    return {text: a,id: b,contact: c};});
-   var Contact = F7(function (a,b,c,d,e,f,g) {    return {name: a,company: b,addresses: c,phones: d,emails: e,category: f,id: g};});
+   var Contact = function (a) {
+      return function (b) {
+         return function (c) {
+            return function (d) {
+               return function (e) {
+                  return function (f) {
+                     return function (g) {
+                        return function (h) {
+                           return function (i) {
+                              return function (j) {
+                                 return {name: a,company: b,addresses: c,phones: d,emails: e,nextAddressID: f,nextPhoneID: g,nextMailID: h,category: i,id: j};
+                              };
+                           };
+                        };
+                     };
+                  };
+               };
+            };
+         };
+      };
+   };
    var Category = F3(function (a,b,c) {    return {name: a,color: b,id: c};});
    var Model = F6(function (a,b,c,d,e,f) {    return {categories: a,nextCategoryID: b,contacts: c,nextContactID: d,filterQuery: e,viewMode: f};});
    var importUrl = "https://contactsampleprovider.herokuapp.com";
@@ -11760,9 +11797,9 @@ Elm.ContactBook.make = function (_elm) {
            }();
            return newModel;
          case "Filter": return {ctor: "_Tuple2",_0: _U.update(model,{filterQuery: _p12._0}),_1: $Effects.none};
-         case "Remove": return {ctor: "_Tuple2"
-                               ,_0: _U.update(model,{categories: A2($List.filter,function (cat) {    return !_U.eq(_p12._0,cat.id);},model.categories)})
-                               ,_1: $Effects.none};
+         case "RemoveCategory": return {ctor: "_Tuple2"
+                                       ,_0: _U.update(model,{categories: A2($List.filter,function (cat) {    return !_U.eq(_p12._0,cat.id);},model.categories)})
+                                       ,_1: $Effects.none};
          case "ModifyCategoryName": var updateCat = function (categoryModel) {
               return _U.eq(categoryModel.id,_p12._0) ? _U.update(categoryModel,{name: _p12._1}) : categoryModel;
            };
@@ -11802,12 +11839,12 @@ Elm.ContactBook.make = function (_elm) {
                                     ,Insert: Insert
                                     ,StartImport: StartImport
                                     ,ProcessImport: ProcessImport
-                                    ,Filter: Filter
-                                    ,Remove: Remove
-                                    ,ModifyCategoryName: ModifyCategoryName
-                                    ,ModifyCategoryColor: ModifyCategoryColor
                                     ,ShowIndex: ShowIndex
                                     ,ShowCategory: ShowCategory
+                                    ,Filter: Filter
+                                    ,RemoveCategory: RemoveCategory
+                                    ,ModifyCategoryName: ModifyCategoryName
+                                    ,ModifyCategoryColor: ModifyCategoryColor
                                     ,AddContact: AddContact
                                     ,ModifyContactName: ModifyContactName
                                     ,ModifyContactCompany: ModifyContactCompany
