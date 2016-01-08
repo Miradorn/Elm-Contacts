@@ -9,6 +9,7 @@ import Effects exposing (Effects, Never)
 import Http
 import Task
 import String
+import Text
 
 
 -- MODEL
@@ -201,6 +202,13 @@ update action model =
 
 -- VIEW
 
+blankStyle =
+  { padding = uniformly 0
+  , outline = noOutline
+  , highlight = noHighlight
+  , style = Text.defaultStyle
+  }
+
 view : Signal.Address Action -> Model -> Html
 view address model =
   case model.viewMode of
@@ -216,10 +224,9 @@ viewIndex address model =
     importButton = button [ onClick address StartImport ] [ text "Import" ]
     filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
   in
-    div [style [("background-color", "black")]]
-      [ div [] [ importButton ]
-      , div [] [ fromElement filterField ]
-      , div [] [ insert ]
+    div [class "container"]
+      [ div [class "filter_field"] [ fromElement filterField ]
+      , div [class "actions"] [ importButton, insert ]
       , ul [] categories
       ]
 
@@ -234,15 +241,15 @@ viewForCategory address category =
 
     id = toString category.id
   in
-    li [ listStyle category.color.string ]
-      [ div []
-        [ div [] [text ("ID: " ++ id ++ ", Name: " ++ name ++ ", Color: " ++ color)]
-        , fromElement nameField
-        , fromElement colorField
-        , button [onClick address (RemoveCategory category.id)] [ text "X" ]
-        , button [onClick address (ShowCategory category)] [text "Show"]
+    li []
+      [ h4 [] [ span [style [("background-color", category.color.string)], class "color"] []
+        , text name
         ]
-     ]
+      , fromElement nameField
+      , fromElement colorField
+      , button [onClick address (RemoveCategory category.id)] [ text "X" ]
+      , button [onClick address (ShowCategory category)] [text "Show"]
+      ]
 
 viewCategory : Signal.Address Action -> Category -> Model -> Html
 viewCategory address category model =
