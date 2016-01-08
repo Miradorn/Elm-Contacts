@@ -9,6 +9,7 @@ import Effects exposing (Effects, Never)
 import Http
 import Task
 import String
+import Dict
 
 
 -- MODEL
@@ -35,15 +36,13 @@ type alias Contact =
   , addresses : List ContactContent
   , phones : List ContactContent
   , emails : List ContactContent
-  , nextAddressID : ID
-  , nextPhoneID : ID
-  , nextMailID : ID
+  , birthday : Content
   , category : ID
   , id : ID
   }
 
 type alias ContactContent =
-  { text : Content
+  { text : String
   , id : ID
   , contact : ID
   }
@@ -51,6 +50,7 @@ type alias ContactContent =
 type ViewMode
   = Index
   | ViewCategory Category
+  | ViewAllContacts
 
 
 type alias ID = Int
@@ -79,37 +79,29 @@ initCategory ( name, color, id ) =
     }
 
 initContact :  ID -> ContactImportType -> Contact
-initContact id ( name, company, addresses, phones, mails, category) =
+initContact id ( name, company, addresses, phones, mails, birthday, category) =
   let
     emptySelection = Selection 0 0 Forward
 
     contentInitializer = initContactContent id
 
     newAddresses = List.indexedMap contentInitializer addresses
-    nextAddressID = List.length newAddresses
     newPhones = List.indexedMap contentInitializer phones
-    nextPhoneID = List.length newPhones
     newMails = List.indexedMap contentInitializer mails
-    nextMailID = List.length newMails
   in
     { name = Content name emptySelection
     , company = Content company emptySelection
     , addresses = newAddresses
     , phones = newPhones
     , emails = newMails
+    , birthday = Content birthday emptySelection
     , category = category
-    , nextMailID = nextMailID
-    , nextPhoneID = nextPhoneID
-    , nextAddressID = nextAddressID
     , id = id
     }
 
 initContactContent :  ID -> ID -> String -> ContactContent
 initContactContent contact id text =
-  let
-    emptySelection = Selection 0 0 Forward
-  in
-    {id = id, contact = contact, text = Content text emptySelection }
+  {id = id, contact = contact, text = text }
 -- UPDATE
 
 type Action
@@ -118,6 +110,7 @@ type Action
   | ProcessImport (Maybe (List CategoryImportType, List ContactImportType))
   | ShowIndex
   | ShowCategory Category
+  | ShowAllContacts
   | Filter Content
   | RemoveCategory ID
   | ModifyCategoryName ID Content
@@ -173,9 +166,11 @@ update action model =
       ({model | viewMode = Index}, Effects.none)
     ShowCategory category ->
       ({model | viewMode = ViewCategory category}, Effects.none)
+    ShowAllContacts ->
+      ({model | viewMode = ViewAllContacts}, Effects.none)
     AddContact category ->
       let
-        newContact = initContact model.nextContactID ("", "", [], [], [], category.id)
+        newContact = initContact model.nextContactID ("", "", [], [], [], "", category.id)
         newContacts =  [ newContact ] ++ model.contacts
       in
         ({ model
@@ -206,6 +201,7 @@ view address model =
   case model.viewMode of
     Index -> viewIndex address model
     ViewCategory category -> viewCategory address category model
+    ViewAllContacts -> viewAllContacts address model
 
 viewIndex : Signal.Address Action -> Model -> Html
 viewIndex address model =
@@ -215,11 +211,12 @@ viewIndex address model =
     insert = button [ onClick address Insert ] [ text "Add" ]
     importButton = button [ onClick address StartImport ] [ text "Import" ]
     filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
+    showAllButton = button [ onClick address ShowAllContacts ] [ text "Show All Contacts" ]
   in
     div [style [("background-color", "black")]]
       [ div [] [ importButton ]
       , div [] [ fromElement filterField ]
-      , div [] [ insert ]
+      , div [] [ insert, showAllButton ]
       , ul [] categories
       ]
 
@@ -266,6 +263,23 @@ viewCategory address category model =
       , ul [ listStyle category.color.string] contactsHtml
       ]
 
+
+viewAllContacts : Signal.Address Action -> Model -> Html
+viewAllContacts address model =
+  let
+    filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
+    indexButton = button [onClick address ShowIndex] [ text "Index"]
+
+    filteredContacts = List.filter (contactHasContent model.filterQuery.string) model.contacts
+    colorToContacts = List.map (\cat -> (cat.color.string, contactsWithCategory filteredContacts cat.id)) model.categories |> Dict.fromList
+    colorsToHTML = Dict.map (\color -> \conts -> div [style [("color", color)]] (List.map (viewForContact address) conts)) colorToContacts
+    contactsHtml = Dict.values colorsToHTML
+  in
+    div [ style [("background-color", "black")]]
+      [ div [][ indexButton, fromElement filterField ]
+      , div [] contactsHtml
+      ]
+
 viewForContact : Signal.Address Action -> Contact -> Html
 viewForContact address contact =
   let
@@ -275,6 +289,8 @@ viewForContact address contact =
     company = contact.company.string
     companyField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactCompany contact.id))) "Name" contact.company
 
+    birthdayField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactName contact.id))) "Birthday" contact.birthday
+
     contentViewMapper = viewForContactContent address
 
     addresses = List.map contentViewMapper contact.addresses
@@ -282,9 +298,10 @@ viewForContact address contact =
     mails = List.map contentViewMapper contact.emails
   in
     li []
-      [ div [] [text ("name:" ++ contact.name.string ++ ", company: " ++ contact.company.string) ]
+      [ div [] [text ("name:" ++ name ++ ", company: " ++ company) ]
       , fromElement nameField
       , fromElement companyField
+      , div [] [text "birthday:", fromElement birthdayField]
       , ul []
         [ text "Addresses"
         , ul [] addresses
@@ -299,15 +316,7 @@ viewForContact address contact =
 
 viewForContactContent : Signal.Address Action -> ContactContent -> Html
 viewForContactContent address content =
-  let
-    contentField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactName content.id))) "What" content.text
-  in
-    li []
-      [ div []
-        [ fromElement contentField
-        , text (" id: " ++ (toString content.id))
-        ]
-      ]
+  li [] [ text (content.text ++ " id: " ++ (toString content.id)) ]
 
 
 
@@ -339,8 +348,17 @@ categoryHasContent query category =
 
 contactHasContent : String -> Contact -> Bool
 contactHasContent query contact =
-  String.contains (String.toLower query) (String.toLower contact.name.string)
-  || String.contains (String.toLower query) (String.toLower contact.company.string)
+  let
+    contentContactFilter content =
+      String.contains (String.toLower query) (String.toLower content.text)
+
+  in
+    String.contains (String.toLower query) (String.toLower contact.name.string)
+    || String.contains (String.toLower query) (String.toLower contact.company.string)
+    || List.any contentContactFilter contact.addresses
+    || List.any contentContactFilter contact.emails
+    || List.any contentContactFilter contact.phones
+    || String.contains (String.toLower query) (String.toLower contact.birthday.string)
 
 -- IMPORT
 
@@ -352,7 +370,7 @@ getContacts =
     |> Effects.task
 
 type alias ContactImportType =
-  (String, String, List String, List String, List String, ID)
+  (String, String, List String, List String, List String, String, ID)
 
 type alias CategoryImportType =
   (String, String, ID)
@@ -403,10 +421,11 @@ contactsDecoder = (Decode.list contactDecoder)
 
 contactDecoder : Decoder ContactImportType
 contactDecoder =
-  Decode.object6 (,,,,,)
+  Decode.object7 (,,,,,,)
     ("name" := Decode.string)
     ("company" := Decode.string)
     ("addresses" := Decode.list Decode.string)
     ("phones" := Decode.list Decode.string)
     ("emails" := Decode.list Decode.string)
+    ("dateOfBirth" := Decode.string)
     ("category" := Decode.int)
