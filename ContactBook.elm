@@ -10,6 +10,7 @@ import Http
 import Task
 import String
 import Dict
+import Set
 
 
 -- MODEL
@@ -51,6 +52,7 @@ type ViewMode
   = Index
   | ViewCategory Category
   | ViewAllContacts
+  | ViewAllCompanies
 
 
 type alias ID = Int
@@ -111,6 +113,7 @@ type Action
   | ShowIndex
   | ShowCategory Category
   | ShowAllContacts
+  | ShowAllCompanies
   | Filter Content
   | RemoveCategory ID
   | ModifyCategoryName ID Content
@@ -168,6 +171,8 @@ update action model =
       ({model | viewMode = ViewCategory category}, Effects.none)
     ShowAllContacts ->
       ({model | viewMode = ViewAllContacts}, Effects.none)
+    ShowAllCompanies ->
+      ({model | viewMode = ViewAllCompanies}, Effects.none)
     AddContact category ->
       let
         newContact = initContact model.nextContactID ("", "", [], [], [], "", category.id)
@@ -202,6 +207,7 @@ view address model =
     Index -> viewIndex address model
     ViewCategory category -> viewCategory address category model
     ViewAllContacts -> viewAllContacts address model
+    ViewAllCompanies -> viewCompanies address model
 
 viewIndex : Signal.Address Action -> Model -> Html
 viewIndex address model =
@@ -210,13 +216,13 @@ viewIndex address model =
     categories = List.map (\cat -> viewForCategory address cat) filteredCategories
     insert = button [ onClick address Insert ] [ text "Add" ]
     importButton = button [ onClick address StartImport ] [ text "Import" ]
-    filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
     showAllButton = button [ onClick address ShowAllContacts ] [ text "Show All Contacts" ]
+    showCompaniesButton = button [ onClick address ShowAllCompanies ] [ text "Show All Companies" ]
   in
     div [style [("background-color", "black")]]
       [ div [] [ importButton ]
-      , div [] [ fromElement filterField ]
-      , div [] [ insert, showAllButton ]
+      , div [] [ filterField address model]
+      , div [] [ insert, showAllButton, showCompaniesButton ]
       , ul [] categories
       ]
 
@@ -248,35 +254,46 @@ viewCategory address category model =
     filteredContacts = List.filter (contactHasContent model.filterQuery.string) mappedContacts
     contactsHtml = List.map (viewForContact address) filteredContacts
 
-    backButton = button [onClick address ShowIndex] [ text "Index"]
     addButton = button [onClick address (AddContact category)] [ text "Add" ]
-
-    filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
 
     id = toString category.id
   in
     div [ style [("background-color", "black"), ("color", category.color.string)] ]
       [ h1 [] [text ("ID: " ++ id ++ " Category Name: " ++ category.name.string)]
-      , fromElement filterField
-      , backButton
+      , filterField address model
+      , indexButton address
       , addButton
       , ul [ listStyle category.color.string] contactsHtml
       ]
+
+viewCompanies : Signal.Address Action -> Model -> Html
+viewCompanies address model =
+  let
+    contactMapper contact =
+      contact.company.string
+    companies = List.map contactMapper model.contacts |> Set.fromList |> Set.toList
+    filteredCompanies = List.filter (stringHasContent model.filterQuery.string) companies
+    companiesHtml = List.map (\company -> li [] [text company]) filteredCompanies
+  in
+    div []
+    [ div []
+      [ indexButton address
+      , div [] [ filterField address model ]
+      ]
+    , ul [] companiesHtml
+    ]
 
 
 viewAllContacts : Signal.Address Action -> Model -> Html
 viewAllContacts address model =
   let
-    filterField = field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery
-    indexButton = button [onClick address ShowIndex] [ text "Index"]
-
     filteredContacts = List.filter (contactHasContent model.filterQuery.string) model.contacts
     colorToContacts = List.map (\cat -> (cat.color.string, contactsWithCategory filteredContacts cat.id)) model.categories |> Dict.fromList
     colorsToHTML = Dict.map (\color -> \conts -> div [style [("color", color)]] (List.map (viewForContact address) conts)) colorToContacts
     contactsHtml = Dict.values colorsToHTML
   in
     div [ style [("background-color", "black")]]
-      [ div [][ indexButton, fromElement filterField ]
+      [ div [][ indexButton address, filterField address model ]
       , div [] contactsHtml
       ]
 
@@ -319,11 +336,6 @@ viewForContactContent address content =
   li [] [ text (content.text ++ " id: " ++ (toString content.id)) ]
 
 
-
-queryUpdateMessage : Signal.Address Action -> Content -> Signal.Message
-queryUpdateMessage address content =
-  Signal.message address (Filter content)
-
 -- STYLES
 
 listStyle : String -> Attribute
@@ -337,28 +349,49 @@ listStyle color =
 
 -- HELPERS
 
+queryUpdateMessage : Signal.Address Action -> Content -> Signal.Message
+queryUpdateMessage address content =
+  Signal.message address (Filter content)
+
+filterField : Signal.Address Action -> Model -> Html
+filterField address model =
+  field defaultStyle (queryUpdateMessage address) "Search" model.filterQuery |> fromElement
+
+indexButton : Signal.Address Action -> Html
+indexButton address = button [onClick address ShowIndex] [ text "Index"]
+
 contactsWithCategory : List Contact -> ID -> List Contact
 contactsWithCategory contacts categoryID =
   List.filter (\contact -> contact.category == categoryID) contacts
 
 categoryHasContent : String -> Category -> Bool
 categoryHasContent query category =
-  String.contains (String.toLower query) (String.toLower category.name.string)
-  || String.contains query category.color.string
+  stringsHaveContent query
+    [ category.name.string
+    , category.color.string
+    ]
 
 contactHasContent : String -> Contact -> Bool
 contactHasContent query contact =
   let
     contentContactFilter content =
-      String.contains (String.toLower query) (String.toLower content.text)
+      stringHasContent query content.text
 
   in
-    String.contains (String.toLower query) (String.toLower contact.name.string)
-    || String.contains (String.toLower query) (String.toLower contact.company.string)
+    stringsHaveContent query
+      [ contact.name.string
+      , contact.company.string
+      , contact.birthday.string]
     || List.any contentContactFilter contact.addresses
     || List.any contentContactFilter contact.emails
     || List.any contentContactFilter contact.phones
-    || String.contains (String.toLower query) (String.toLower contact.birthday.string)
+
+stringsHaveContent : String -> List String -> Bool
+stringsHaveContent query strings = List.any (stringHasContent query) strings
+
+stringHasContent : String -> String -> Bool
+stringHasContent query string =
+  String.contains (String.toLower query) (String.toLower string)
 
 -- IMPORT
 
