@@ -11582,7 +11582,8 @@ Elm.ContactBook.make = function (_elm) {
    $Set = Elm.Set.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $String = Elm.String.make(_elm),
-   $Task = Elm.Task.make(_elm);
+   $Task = Elm.Task.make(_elm),
+   $Text = Elm.Text.make(_elm);
    var _op = {};
    var contactDecoder = A8($Json$Decode.object7,
    F7(function (v0,v1,v2,v3,v4,v5,v6) {    return {ctor: "_Tuple7",_0: v0,_1: v1,_2: v2,_3: v3,_4: v4,_5: v5,_6: v6};}),
@@ -11625,6 +11626,10 @@ Elm.ContactBook.make = function (_elm) {
    var viewForContactContent = F2(function (address,content) {
       return A2($Html.li,_U.list([]),_U.list([$Html.text(A2($Basics._op["++"],content.text,A2($Basics._op["++"]," id: ",$Basics.toString(content.id))))]));
    });
+   var blankStyle = {padding: $Graphics$Input$Field.uniformly(0)
+                    ,outline: $Graphics$Input$Field.noOutline
+                    ,highlight: $Graphics$Input$Field.noHighlight
+                    ,style: $Text.defaultStyle};
    var ModifyContactCompany = F2(function (a,b) {    return {ctor: "ModifyContactCompany",_0: a,_1: b};});
    var ModifyContactName = F2(function (a,b) {    return {ctor: "ModifyContactName",_0: a,_1: b};});
    var viewForContact = F2(function (address,contact) {
@@ -11693,18 +11698,18 @@ Elm.ContactBook.make = function (_elm) {
       category.name);
       var name = category.name.string;
       return A2($Html.li,
-      _U.list([listStyle(category.color.string)]),
-      _U.list([A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.div,
+      _U.list([A2($Html.h4,
               _U.list([]),
-              _U.list([$Html.text(A2($Basics._op["++"],
-              "ID: ",
-              A2($Basics._op["++"],id,A2($Basics._op["++"],", Name: ",A2($Basics._op["++"],name,A2($Basics._op["++"],", Color: ",color))))))]))
+              _U.list([A2($Html.span,
+                      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "background-color",_1: category.color.string}]))
+                              ,$Html$Attributes.$class("color")]),
+                      _U.list([]))
+                      ,$Html.text(name)]))
               ,$Html.fromElement(nameField)
               ,$Html.fromElement(colorField)
               ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,RemoveCategory(category.id))]),_U.list([$Html.text("X")]))
-              ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,ShowCategory(category))]),_U.list([$Html.text("Show")]))]))]));
+              ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,ShowCategory(category))]),_U.list([$Html.text("Show")]))]));
    });
    var ShowIndex = {ctor: "ShowIndex"};
    var indexButton = function (address) {    return A2($Html.button,_U.list([A2($Html$Events.onClick,address,ShowIndex)]),_U.list([$Html.text("Index")]));};
@@ -11763,10 +11768,9 @@ Elm.ContactBook.make = function (_elm) {
       var filteredCategories = A2($List.filter,categoryHasContent(model.filterQuery.string),model.categories);
       var categories = A2($List.map,function (cat) {    return A2(viewForCategory,address,cat);},filteredCategories);
       return A2($Html.div,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "background-color",_1: "black"}]))]),
-      _U.list([A2($Html.div,_U.list([]),_U.list([importButton]))
-              ,A2($Html.div,_U.list([]),_U.list([A2(filterField,address,model)]))
-              ,A2($Html.div,_U.list([]),_U.list([insert,showAllButton,showCompaniesButton]))
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("filter_field")]),_U.list([A2(filterField,address,model)]))
+              ,A2($Html.div,_U.list([$Html$Attributes.$class("actions")]),_U.list([importButton,insert,showAllButton,showCompaniesButton]))
               ,A2($Html.ul,_U.list([]),categories)]));
    });
    var view = F2(function (address,model) {
@@ -11912,6 +11916,7 @@ Elm.ContactBook.make = function (_elm) {
                                     ,ModifyContactName: ModifyContactName
                                     ,ModifyContactCompany: ModifyContactCompany
                                     ,update: update
+                                    ,blankStyle: blankStyle
                                     ,view: view
                                     ,viewIndex: viewIndex
                                     ,viewForCategory: viewForCategory
@@ -11937,11 +11942,11 @@ Elm.ContactBook.make = function (_elm) {
                                     ,contactsDecoder: contactsDecoder
                                     ,contactDecoder: contactDecoder};
 };
-Elm.Main = Elm.Main || {};
-Elm.Main.make = function (_elm) {
+Elm.Contacts = Elm.Contacts || {};
+Elm.Contacts.make = function (_elm) {
    "use strict";
-   _elm.Main = _elm.Main || {};
-   if (_elm.Main.values) return _elm.Main.values;
+   _elm.Contacts = _elm.Contacts || {};
+   if (_elm.Contacts.values) return _elm.Contacts.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $ContactBook = Elm.ContactBook.make(_elm),
@@ -11957,5 +11962,5 @@ Elm.Main.make = function (_elm) {
    var app = $StartApp.start({init: $ContactBook.init,update: $ContactBook.update,view: $ContactBook.view,inputs: _U.list([])});
    var main = app.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
-   return _elm.Main.values = {_op: _op,app: app,main: main};
+   return _elm.Contacts.values = {_op: _op,app: app,main: main};
 };

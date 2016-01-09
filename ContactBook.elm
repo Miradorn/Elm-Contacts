@@ -11,6 +11,7 @@ import Task
 import String
 import Dict
 import Set
+import Text
 
 
 -- MODEL
@@ -201,6 +202,13 @@ update action model =
 
 -- VIEW
 
+blankStyle =
+  { padding = uniformly 0
+  , outline = noOutline
+  , highlight = noHighlight
+  , style = Text.defaultStyle
+  }
+
 view : Signal.Address Action -> Model -> Html
 view address model =
   case model.viewMode of
@@ -219,10 +227,9 @@ viewIndex address model =
     showAllButton = button [ onClick address ShowAllContacts ] [ text "Show All Contacts" ]
     showCompaniesButton = button [ onClick address ShowAllCompanies ] [ text "Show All Companies" ]
   in
-    div [style [("background-color", "black")]]
-      [ div [] [ importButton ]
-      , div [] [ filterField address model]
-      , div [] [ insert, showAllButton, showCompaniesButton ]
+    div [class "container"]
+      [ div [class "filter_field"] [ filterField address model]
+      , div [class "actions"] [ importButton, insert, showAllButton, showCompaniesButton ]
       , ul [] categories
       ]
 
@@ -237,15 +244,15 @@ viewForCategory address category =
 
     id = toString category.id
   in
-    li [ listStyle category.color.string ]
-      [ div []
-        [ div [] [text ("ID: " ++ id ++ ", Name: " ++ name ++ ", Color: " ++ color)]
-        , fromElement nameField
-        , fromElement colorField
-        , button [onClick address (RemoveCategory category.id)] [ text "X" ]
-        , button [onClick address (ShowCategory category)] [text "Show"]
+    li []
+      [ h4 [] [ span [style [("background-color", category.color.string)], class "color"] []
+        , text name
         ]
-     ]
+      , fromElement nameField
+      , fromElement colorField
+      , button [onClick address (RemoveCategory category.id)] [ text "X" ]
+      , button [onClick address (ShowCategory category)] [text "Show"]
+      ]
 
 viewCategory : Signal.Address Action -> Category -> Model -> Html
 viewCategory address category model =

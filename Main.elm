@@ -1,3 +1,5 @@
+module Contacts where
+
 import ContactBook exposing (update, view, init)
 import Effects exposing (Never)
 import StartApp
