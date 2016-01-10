@@ -43,6 +43,9 @@ button {
 	color: #2980B9;
 	font-weight: 300;
 	padding: 10px;
+}
+
+.actions button:not(:last-child) {
 	margin-right: 20px;
 }
 
@@ -71,9 +74,52 @@ em {
 	font-style: italic;
 }
 
+hr {
+	border: none;
+	border-bottom: 1px solid #ECF0F1;
+	height: 0;
+	margin-top: 20px;
+	padding: 0;
+}
+
 .color {
 	width: 20px;
 	height: 20px;
 	display: inline-block;
 	border-radius: 10px;
+	vertical-align: middle;
+	margin-right: 10px;
+}
+
+.category {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.category > * + * {
+	margin-left: 10px !important;
+}
+.category h4 + * {
+	margin-left: 0 !important;
+}
+
+.category h4 {
+	width: 100%;
+	font-weight: 300;
+	margin: 20px 0 10px;
+}
+
+.category input {
+	width: auto !important;
+	flex-grow: 1;
+	background: #ECF0F1;
+	height: 30px !important;
+	font-family: Roboto;
+	font-size: 16px;
+	font-weight: 300 !important;
+}
+
+.category button {
+	height: 30px !important;
+	padding-top: 5px;
 }

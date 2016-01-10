@@ -230,6 +230,7 @@ viewIndex address model =
     div [class "container"]
       [ div [class "filter_field"] [ filterField address model]
       , div [class "actions"] [ importButton, insert, showAllButton, showCompaniesButton ]
+      , hr [] []
       , ul [] categories
       ]
 
@@ -244,7 +245,7 @@ viewForCategory address category =
 
     id = toString category.id
   in
-    li []
+    li [class "category"]
       [ h4 [] [ span [style [("background-color", category.color.string)], class "color"] []
         , text name
         ]
