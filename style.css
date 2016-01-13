@@ -70,6 +70,12 @@ h2 {
 	color: #999;
 }
 
+h3 {
+	font-size: 23px;
+	font-weight: 300;
+	margin-bottom: 20px;
+}
+
 em {
 	font-style: italic;
 }

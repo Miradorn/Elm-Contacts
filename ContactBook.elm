@@ -266,12 +266,15 @@ viewCategory address category model =
 
     id = toString category.id
   in
-    div [ style [("background-color", "black"), ("color", category.color.string)] ]
-      [ h1 [] [text ("ID: " ++ id ++ " Category Name: " ++ category.name.string)]
-      , filterField address model
-      , indexButton address
-      , addButton
-      , ul [ listStyle category.color.string] contactsHtml
+    div [class "container"]
+      [ h3 []
+        [ text ("Category '" ++ category.name.string ++ "'")
+        , span [class "color", style [("background-color", category.color.string)]] []
+        ]
+      , div [class "filter_field"] [ filterField address model]
+      , div [class "actions"] [indexButton address, addButton]
+      , hr [] []
+      , ul [] contactsHtml
       ]
 
 viewCompanies : Signal.Address Action -> Model -> Html
@@ -300,8 +303,12 @@ viewAllContacts address model =
     colorsToHTML = Dict.map (\color -> \conts -> div [style [("color", color)]] (List.map (viewForContact address) conts)) colorToContacts
     contactsHtml = Dict.values colorsToHTML
   in
-    div [ style [("background-color", "black")]]
-      [ div [][ indexButton address, filterField address model ]
+    div [class "container"]
+      [ [ h3 []
+        [ text ("Category '" ++ category.name.string ++ "'")
+        , span [class "color", style [("background-color", category.color.string)]] []
+        ]
+      ,div [][ indexButton address, filterField address model ]
       , div [] contactsHtml
       ]
 

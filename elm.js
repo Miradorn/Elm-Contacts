@@ -13119,25 +13119,26 @@ Elm.ContactBook.make = function (_elm) {
       viewForContact(address),
       filteredContacts);
       return A2($Html.div,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "background-color"
-                                               ,_1: "black"}
-                                              ,{ctor: "_Tuple2",_0: "color",_1: category.color.string}]))]),
-      _U.list([A2($Html.h1,
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([A2($Html.h3,
               _U.list([]),
               _U.list([$Html.text(A2($Basics._op["++"],
-              "ID: ",
-              A2($Basics._op["++"],
-              id,
-              A2($Basics._op["++"],
-              " Category Name: ",
-              category.name.string))))]))
-              ,A2(filterField,address,model)
-              ,indexButton(address)
-              ,addButton
-              ,A2($Html.ul,
-              _U.list([listStyle(category.color.string)]),
-              contactsHtml)]));
+                      "Category \'",
+                      A2($Basics._op["++"],category.name.string,"\'")))
+                      ,A2($Html.span,
+                      _U.list([$Html$Attributes.$class("color")
+                              ,$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
+                                                               ,_0: "background-color"
+                                                               ,_1: category.color.string}]))]),
+                      _U.list([]))]))
+              ,A2($Html.div,
+              _U.list([$Html$Attributes.$class("filter_field")]),
+              _U.list([A2(filterField,address,model)]))
+              ,A2($Html.div,
+              _U.list([$Html$Attributes.$class("actions")]),
+              _U.list([indexButton(address),addButton]))
+              ,A2($Html.hr,_U.list([]),_U.list([]))
+              ,A2($Html.ul,_U.list([]),contactsHtml)]));
    });
    var viewCompanies = F2(function (address,model) {
       var contactMapper = function (contact) {
