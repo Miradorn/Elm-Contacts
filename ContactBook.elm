@@ -16,6 +16,16 @@ import Text
 
 -- MODEL
 importUrl = "https://contactsampleprovider.herokuapp.com"
+domainsToFilter =
+  [ "web.de"
+  , "gmail.com"
+  , "t-online.de"
+  , "gmx.net"
+  , "gmx.de"
+  , "googlemail.com"
+  , "arcor.de"
+  , "alice-dsl.de"
+  ]
 
 type alias Model =
   { categories : List Category
@@ -52,8 +62,11 @@ type alias ContactContent =
 type ViewMode
   = Index
   | ViewCategory Category
+  | ViewEmailList Category
   | ViewAllContacts
   | ViewAllCompanies
+  | ViewTLDs
+  | ViewCompanyTLDs
 
 
 type alias ID = Int
@@ -113,8 +126,11 @@ type Action
   | ProcessImport (Maybe (List CategoryImportType, List ContactImportType))
   | ShowIndex
   | ShowCategory Category
+  | ShowEmailList Category
   | ShowAllContacts
   | ShowAllCompanies
+  | ShowTLDs
+  | ShowCompanyTLDs
   | Filter Content
   | RemoveCategory ID
   | ModifyCategoryName ID Content
@@ -170,10 +186,16 @@ update action model =
       ({model | viewMode = Index}, Effects.none)
     ShowCategory category ->
       ({model | viewMode = ViewCategory category}, Effects.none)
+    ShowEmailList category ->
+      ({model | viewMode = ViewEmailList category}, Effects.none)
     ShowAllContacts ->
       ({model | viewMode = ViewAllContacts}, Effects.none)
     ShowAllCompanies ->
       ({model | viewMode = ViewAllCompanies}, Effects.none)
+    ShowTLDs ->
+      ({model | viewMode = ViewTLDs}, Effects.none)
+    ShowCompanyTLDs ->
+      ({model | viewMode = ViewCompanyTLDs}, Effects.none)
     AddContact category ->
       let
         newContact = initContact model.nextContactID ("", "", [], [], [], "", category.id)
@@ -211,11 +233,18 @@ blankStyle =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-  case model.viewMode of
-    Index -> viewIndex address model
-    ViewCategory category -> viewCategory address category model
-    ViewAllContacts -> viewAllContacts address model
-    ViewAllCompanies -> viewCompanies address model
+  let viewFinder =
+    address
+      |> case model.viewMode of
+          Index -> viewIndex
+          ViewCategory category -> viewCategory category
+          ViewEmailList category -> viewEmailList category
+          ViewAllContacts -> viewAllContacts
+          ViewAllCompanies -> viewCompanies
+          ViewTLDs -> viewTLDs
+          ViewCompanyTLDs -> viewCompanyTLDs
+  in
+    viewFinder model
 
 viewIndex : Signal.Address Action -> Model -> Html
 viewIndex address model =
@@ -226,10 +255,19 @@ viewIndex address model =
     importButton = button [ onClick address StartImport ] [ text "Import" ]
     showAllButton = button [ onClick address ShowAllContacts ] [ text "Show All Contacts" ]
     showCompaniesButton = button [ onClick address ShowAllCompanies ] [ text "Show All Companies" ]
+    showTLDsButton = button [ onClick address ShowTLDs ] [ text "Show All TLDs" ]
+    showCompanyTLDsButton = button [ onClick address ShowCompanyTLDs ] [ text "Show Company TLDs" ]
   in
     div [class "container"]
       [ div [class "filter_field"] [ filterField address model]
-      , div [class "actions"] [ importButton, insert, showAllButton, showCompaniesButton ]
+      , div [class "actions"]
+        [ importButton
+        , insert
+        , showAllButton
+        , showCompaniesButton
+        , showTLDsButton
+        , showCompanyTLDsButton
+        ]
       , ul [] categories
       ]
 
@@ -254,14 +292,15 @@ viewForCategory address category =
       , button [onClick address (ShowCategory category)] [text "Show"]
       ]
 
-viewCategory : Signal.Address Action -> Category -> Model -> Html
-viewCategory address category model =
+viewCategory : Category -> Signal.Address Action -> Model -> Html
+viewCategory category address  model =
   let
     mappedContacts = contactsWithCategory model.contacts category.id
     filteredContacts = List.filter (contactHasContent model.filterQuery.string) mappedContacts
     contactsHtml = List.map (viewForContact address) filteredContacts
 
     addButton = button [onClick address (AddContact category)] [ text "Add" ]
+    mailButton = button [onClick address (ShowEmailList category)] [ text "Send eMail" ]
 
     id = toString category.id
   in
@@ -270,7 +309,33 @@ viewCategory address category model =
       , filterField address model
       , indexButton address
       , addButton
+      , mailButton
       , ul [ listStyle category.color.string] contactsHtml
+      ]
+
+viewEmailList : Category -> Signal.Address Action -> Model -> Html
+viewEmailList category address  model =
+  let
+    notEmpty string = not (String.isEmpty string)
+    mailGrabber contact =
+      List.head contact.emails
+        |> Maybe.map (\n -> n.text)
+        |> Maybe.withDefault ""
+
+    mappedContacts = contactsWithCategory model.contacts category.id
+    emailList =
+      List.map mailGrabber mappedContacts
+      |> List.filter notEmpty
+      |> String.join ", "
+
+
+    addButton = button [onClick address (AddContact category)] [ text "Add" ]
+
+    id = toString category.id
+  in
+    div [ style [("background-color", "black"), ("color", category.color.string)] ]
+      [ indexButton address
+      , text emailList
       ]
 
 viewCompanies : Signal.Address Action -> Model -> Html
@@ -278,7 +343,9 @@ viewCompanies address model =
   let
     contactMapper contact =
       contact.company.string
-    companies = List.map contactMapper model.contacts |> Set.fromList |> Set.toList
+    companies = List.map contactMapper model.contacts
+      |> Set.fromList
+      |> Set.toList
     filteredCompanies = List.filter (stringHasContent model.filterQuery.string) companies
     companiesHtml = List.map (\company -> li [] [text company]) filteredCompanies
   in
@@ -290,6 +357,66 @@ viewCompanies address model =
     , ul [] companiesHtml
     ]
 
+viewTLDs : Signal.Address Action -> Model -> Html
+viewTLDs address model =
+  let
+    tldMapper email =
+      email.text
+        |> String.split "@"
+        |> List.drop 1
+        |> List.head
+        |> Maybe.withDefault ""
+    contactToTLDMapper contact =
+      List.map tldMapper contact.emails
+
+    tldsHtml = List.map contactToTLDMapper model.contacts
+      |> List.concat
+      |> Set.fromList
+      |> Set.remove ""
+      |> Set.toList
+      |> List.filter (stringHasContent model.filterQuery.string)
+      |> List.map (\tld -> li [] [text tld])
+  in
+    div []
+    [ div []
+      [ indexButton address
+      , div [] [ filterField address model ]
+      ]
+    , ul [] tldsHtml
+    ]
+
+viewCompanyTLDs : Signal.Address Action -> Model -> Html
+viewCompanyTLDs address model =
+  let
+    tldMapper email =
+      email.text
+        |> String.split "@"
+        |> List.drop 1
+        |> List.head
+        |> Maybe.withDefault ""
+    contactToTLDMapper contact =
+      List.map tldMapper contact.emails
+    tldFilter mail =
+      List.map (stringHasContent mail) domainsToFilter
+        |> List.foldr (\a -> \b -> a || b) False
+        |> not
+
+    tldsHtml = List.map contactToTLDMapper model.contacts
+      |> List.concat
+      |> Set.fromList
+      |> Set.remove ""
+      |> Set.toList
+      |> List.filter (stringHasContent model.filterQuery.string)
+      |> List.filter tldFilter
+      |> List.map (\tld -> li [] [text tld])
+  in
+    div []
+    [ div []
+      [ indexButton address
+      , div [] [ filterField address model ]
+      ]
+    , ul [] tldsHtml
+    ]
 
 viewAllContacts : Signal.Address Action -> Model -> Html
 viewAllContacts address model =
