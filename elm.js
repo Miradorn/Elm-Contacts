@@ -13164,11 +13164,6 @@ Elm.ContactBook.make = function (_elm) {
    });
    var viewEmailList = F3(function (category,address,model) {
       var id = $Basics.toString(category.id);
-      var addButton = A2($Html.button,
-      _U.list([A2($Html$Events.onClick,
-      address,
-      AddContact(category))]),
-      _U.list([$Html.text("Add")]));
       var mappedContacts = A2(contactsWithCategory,
       model.contacts,
       category.id);
@@ -13190,11 +13185,30 @@ Elm.ContactBook.make = function (_elm) {
       notEmpty,
       A2($List.map,mailGrabber,mappedContacts)));
       return A2($Html.div,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "background-color"
-                                               ,_1: "black"}
-                                              ,{ctor: "_Tuple2",_0: "color",_1: category.color.string}]))]),
-      _U.list([indexButton(address),$Html.text(emailList)]));
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([A2($Html.h3,
+              _U.list([]),
+              _U.list([$Html.text(A2($Basics._op["++"],
+                      "All e-mail addresses in \'",
+                      A2($Basics._op["++"],category.name.string,"\'")))
+                      ,A2($Html.span,
+                      _U.list([$Html$Attributes.$class("color")
+                              ,$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
+                                                               ,_0: "background-color"
+                                                               ,_1: category.color.string}]))]),
+                      _U.list([]))]))
+              ,A2($Html.div,
+              _U.list([$Html$Attributes.$class("actions")]),
+              _U.list([A2($Html.button,
+                      _U.list([A2($Html$Events.onClick,
+                      address,
+                      ShowCategory(category))]),
+                      _U.list([$Html.text("Back")]))
+                      ,indexButton(address)]))
+              ,A2($Html.hr,_U.list([]),_U.list([]))
+              ,A2($Html.textarea,
+              _U.list([$Html$Attributes.$class("full_size")]),
+              _U.list([$Html.text(emailList)]))]));
    });
    var viewCompanies = F2(function (address,model) {
       var contactMapper = function (contact) {

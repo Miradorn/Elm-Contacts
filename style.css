@@ -31,6 +31,18 @@ body {
 	margin-bottom: 20px !important;
 }
 
+textarea.full_size {
+	width: 100% !important;
+	border-radius: 3px !important;
+	height: 350px !important;
+	font-size: 16px !important;
+	font-family: Roboto;
+	padding: 10px;
+	background: #ECF0F1;
+	border: 1px solid rgb(211, 215, 207);
+	margin-bottom: 20px !important;
+}
+
 .actions {
 	text-align: center;
 }

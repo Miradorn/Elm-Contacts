@@ -340,14 +340,19 @@ viewEmailList category address  model =
       |> List.filter notEmpty
       |> String.join ", "
 
-
-    addButton = button [onClick address (AddContact category)] [ text "Add" ]
-
     id = toString category.id
   in
-    div [ style [("background-color", "black"), ("color", category.color.string)] ]
-      [ indexButton address
-      , text emailList
+    div [class "container"]
+      [ h3 []
+        [ text ("All e-mail addresses in '" ++ category.name.string ++ "'")
+        , span [class "color", style [("background-color", category.color.string)]] []
+        ]
+      , div [class "actions"]
+        [ button [onClick address (ShowCategory category)] [text "Back"]
+        , indexButton address
+        ]
+      , hr [] []
+      , textarea [class "full_size"] [text emailList]
       ]
 
 viewCompanies : Signal.Address Action -> Model -> Html
