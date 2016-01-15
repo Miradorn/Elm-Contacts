@@ -13049,8 +13049,13 @@ Elm.ContactBook.make = function (_elm) {
       "Search",
       model.filterQuery));
    });
+   var ShowCompanyTLDs = {ctor: "ShowCompanyTLDs"};
+   var ShowTLDs = {ctor: "ShowTLDs"};
    var ShowAllCompanies = {ctor: "ShowAllCompanies"};
    var ShowAllContacts = {ctor: "ShowAllContacts"};
+   var ShowEmailList = function (a) {
+      return {ctor: "ShowEmailList",_0: a};
+   };
    var ShowCategory = function (a) {
       return {ctor: "ShowCategory",_0: a};
    };
@@ -13102,8 +13107,13 @@ Elm.ContactBook.make = function (_elm) {
       _U.list([A2($Html$Events.onClick,address,ShowIndex)]),
       _U.list([$Html.text("Index")]));
    };
-   var viewCategory = F3(function (address,category,model) {
+   var viewCategory = F3(function (category,address,model) {
       var id = $Basics.toString(category.id);
+      var mailButton = A2($Html.button,
+      _U.list([A2($Html$Events.onClick,
+      address,
+      ShowEmailList(category))]),
+      _U.list([$Html.text("Send eMail")]));
       var addButton = A2($Html.button,
       _U.list([A2($Html$Events.onClick,
       address,
@@ -13136,9 +13146,43 @@ Elm.ContactBook.make = function (_elm) {
               _U.list([A2(filterField,address,model)]))
               ,A2($Html.div,
               _U.list([$Html$Attributes.$class("actions")]),
-              _U.list([indexButton(address),addButton]))
+              _U.list([indexButton(address),addButton,mailButton]))
               ,A2($Html.hr,_U.list([]),_U.list([]))
               ,A2($Html.ul,_U.list([]),contactsHtml)]));
+   });
+   var viewEmailList = F3(function (category,address,model) {
+      var id = $Basics.toString(category.id);
+      var addButton = A2($Html.button,
+      _U.list([A2($Html$Events.onClick,
+      address,
+      AddContact(category))]),
+      _U.list([$Html.text("Add")]));
+      var mappedContacts = A2(contactsWithCategory,
+      model.contacts,
+      category.id);
+      var mailGrabber = function (contact) {
+         return A2($Maybe.withDefault,
+         "",
+         A2($Maybe.map,
+         function (n) {
+            return n.text;
+         },
+         $List.head(contact.emails)));
+      };
+      var notEmpty = function (string) {
+         return $Basics.not($String.isEmpty(string));
+      };
+      var emailList = A2($String.join,
+      ", ",
+      A2($List.filter,
+      notEmpty,
+      A2($List.map,mailGrabber,mappedContacts)));
+      return A2($Html.div,
+      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
+                                               ,_0: "background-color"
+                                               ,_1: "black"}
+                                              ,{ctor: "_Tuple2",_0: "color",_1: category.color.string}]))]),
+      _U.list([indexButton(address),$Html.text(emailList)]));
    });
    var viewCompanies = F2(function (address,model) {
       var contactMapper = function (contact) {
@@ -13167,6 +13211,36 @@ Elm.ContactBook.make = function (_elm) {
                       _U.list([A2(filterField,address,model)]))]))
               ,A2($Html.ul,_U.list([]),companiesHtml)]));
    });
+   var viewTLDs = F2(function (address,model) {
+      var tldMapper = function (email) {
+         return A2($Maybe.withDefault,
+         "",
+         $List.head(A2($List.drop,1,A2($String.split,"@",email.text))));
+      };
+      var contactToTLDMapper = function (contact) {
+         return A2($List.map,tldMapper,contact.emails);
+      };
+      var tldsHtml = A2($List.map,
+      function (tld) {
+         return A2($Html.li,_U.list([]),_U.list([$Html.text(tld)]));
+      },
+      A2($List.filter,
+      stringHasContent(model.filterQuery.string),
+      $Set.toList(A2($Set.remove,
+      "",
+      $Set.fromList($List.concat(A2($List.map,
+      contactToTLDMapper,
+      model.contacts)))))));
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.div,
+              _U.list([]),
+              _U.list([indexButton(address)
+                      ,A2($Html.div,
+                      _U.list([]),
+                      _U.list([A2(filterField,address,model)]))]))
+              ,A2($Html.ul,_U.list([]),tldsHtml)]));
+   });
    var viewAllContacts = F2(function (address,model) {
       var filteredContacts = A2($List.filter,
       contactHasContent(model.filterQuery.string),
@@ -13189,12 +13263,14 @@ Elm.ContactBook.make = function (_elm) {
       colorToContacts);
       var contactsHtml = $Dict.values(colorsToHTML);
       return A2($Html.div,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "background-color"
-                                               ,_1: "black"}]))]),
-      _U.list([A2($Html.div,
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([A2($Html.h3,
+              _U.list([]),
+              _U.list([$Html.text("All contacts")]))
+              ,A2($Html.div,
               _U.list([]),
               _U.list([indexButton(address),A2(filterField,address,model)]))
+              ,A2($Html.hr,_U.list([]),_U.list([]))
               ,A2($Html.div,_U.list([]),contactsHtml)]));
    });
    var ProcessImport = function (a) {
@@ -13203,6 +13279,12 @@ Elm.ContactBook.make = function (_elm) {
    var StartImport = {ctor: "StartImport"};
    var Insert = {ctor: "Insert"};
    var viewIndex = F2(function (address,model) {
+      var showCompanyTLDsButton = A2($Html.button,
+      _U.list([A2($Html$Events.onClick,address,ShowCompanyTLDs)]),
+      _U.list([$Html.text("Show Company TLDs")]));
+      var showTLDsButton = A2($Html.button,
+      _U.list([A2($Html$Events.onClick,address,ShowTLDs)]),
+      _U.list([$Html.text("Show All TLDs")]));
       var showCompaniesButton = A2($Html.button,
       _U.list([A2($Html$Events.onClick,address,ShowAllCompanies)]),
       _U.list([$Html.text("Show All Companies")]));
@@ -13233,67 +13315,61 @@ Elm.ContactBook.make = function (_elm) {
               _U.list([importButton
                       ,insert
                       ,showAllButton
-                      ,showCompaniesButton]))
+                      ,showCompaniesButton
+                      ,showTLDsButton
+                      ,showCompanyTLDsButton]))
               ,A2($Html.hr,_U.list([]),_U.list([]))
               ,A2($Html.ul,_U.list([]),categories)]));
-   });
-   var view = F2(function (address,model) {
-      var _p0 = model.viewMode;
-      switch (_p0.ctor)
-      {case "Index": return A2(viewIndex,address,model);
-         case "ViewCategory": return A3(viewCategory,
-           address,
-           _p0._0,
-           model);
-         case "ViewAllContacts": return A2(viewAllContacts,
-           address,
-           model);
-         default: return A2(viewCompanies,address,model);}
    });
    var initContactContent = F3(function (contact,id,text) {
       return {id: id,contact: contact,text: text};
    });
-   var initContact = F2(function (id,_p1) {
-      var _p2 = _p1;
+   var initContact = F2(function (id,_p0) {
+      var _p1 = _p0;
       var contentInitializer = initContactContent(id);
       var newAddresses = A2($List.indexedMap,
       contentInitializer,
-      _p2._2);
-      var newPhones = A2($List.indexedMap,contentInitializer,_p2._3);
-      var newMails = A2($List.indexedMap,contentInitializer,_p2._4);
+      _p1._2);
+      var newPhones = A2($List.indexedMap,contentInitializer,_p1._3);
+      var newMails = A2($List.indexedMap,contentInitializer,_p1._4);
       var emptySelection = A3($Graphics$Input$Field.Selection,
       0,
       0,
       $Graphics$Input$Field.Forward);
       return {name: A2($Graphics$Input$Field.Content,
-             _p2._0,
+             _p1._0,
              emptySelection)
              ,company: A2($Graphics$Input$Field.Content,
-             _p2._1,
+             _p1._1,
              emptySelection)
              ,addresses: newAddresses
              ,phones: newPhones
              ,emails: newMails
              ,birthday: A2($Graphics$Input$Field.Content,
-             _p2._5,
+             _p1._5,
              emptySelection)
-             ,category: _p2._6
+             ,category: _p1._6
              ,id: id};
    });
-   var initCategory = function (_p3) {
-      var _p4 = _p3;
+   var initCategory = function (_p2) {
+      var _p3 = _p2;
       var emptySelection = A3($Graphics$Input$Field.Selection,
       0,
       0,
       $Graphics$Input$Field.Forward);
       return {name: A2($Graphics$Input$Field.Content,
-             _p4._0,
+             _p3._0,
              emptySelection)
-             ,color: A2($Graphics$Input$Field.Content,_p4._1,emptySelection)
-             ,id: _p4._2};
+             ,color: A2($Graphics$Input$Field.Content,_p3._1,emptySelection)
+             ,id: _p3._2};
    };
+   var ViewCompanyTLDs = {ctor: "ViewCompanyTLDs"};
+   var ViewTLDs = {ctor: "ViewTLDs"};
    var ViewAllCompanies = {ctor: "ViewAllCompanies"};
    var ViewAllContacts = {ctor: "ViewAllContacts"};
+   var ViewEmailList = function (a) {
+      return {ctor: "ViewEmailList",_0: a};
+   };
    var ViewCategory = function (a) {
       return {ctor: "ViewCategory",_0: a};
    };
@@ -13311,24 +13387,24 @@ Elm.ContactBook.make = function (_elm) {
                    $Graphics$Input$Field.Forward))
                    ,viewMode: Index}
               ,_1: $Effects.none};
-   var processImport = function (_p5) {
-      var _p6 = _p5;
-      var _p11 = _p6._1;
-      var _p10 = _p6._0;
-      var indexRange = _U.range(0,$List.length(_p11));
-      var newContacts = A3($List.map2,initContact,indexRange,_p11);
+   var processImport = function (_p4) {
+      var _p5 = _p4;
+      var _p10 = _p5._1;
+      var _p9 = _p5._0;
+      var indexRange = _U.range(0,$List.length(_p10));
+      var newContacts = A3($List.map2,initContact,indexRange,_p10);
       var newNextContactID = $List.length(indexRange);
       var ids = A2($List.map,
-      function (_p7) {
-         var _p8 = _p7;
-         return _p8._2;
+      function (_p6) {
+         var _p7 = _p6;
+         return _p7._2;
       },
-      _p10);
+      _p9);
       var catMaxId = A2($Maybe.withDefault,0,$List.maximum(ids));
-      var newCategories = A2($List.map,initCategory,_p10);
-      var _p9 = init;
-      var newModel = _p9._0;
-      var newAction = _p9._1;
+      var newCategories = A2($List.map,initCategory,_p9);
+      var _p8 = init;
+      var newModel = _p8._0;
+      var newAction = _p8._1;
       return {ctor: "_Tuple2"
              ,_0: _U.update(newModel,
              {categories: newCategories
@@ -13360,6 +13436,66 @@ Elm.ContactBook.make = function (_elm) {
              ,nextContactID: d
              ,filterQuery: e
              ,viewMode: f};
+   });
+   var domainsToFilter = _U.list(["web.de"
+                                 ,"gmail.com"
+                                 ,"t-online.de"
+                                 ,"gmx.net"
+                                 ,"gmx.de"
+                                 ,"googlemail.com"
+                                 ,"arcor.de"
+                                 ,"alice-dsl.de"]);
+   var viewCompanyTLDs = F2(function (address,model) {
+      var tldFilter = function (mail) {
+         return $Basics.not(A3($List.foldr,
+         F2(function (a,b) {    return a || b;}),
+         false,
+         A2($List.map,stringHasContent(mail),domainsToFilter)));
+      };
+      var tldMapper = function (email) {
+         return A2($Maybe.withDefault,
+         "",
+         $List.head(A2($List.drop,1,A2($String.split,"@",email.text))));
+      };
+      var contactToTLDMapper = function (contact) {
+         return A2($List.map,tldMapper,contact.emails);
+      };
+      var tldsHtml = A2($List.map,
+      function (tld) {
+         return A2($Html.li,_U.list([]),_U.list([$Html.text(tld)]));
+      },
+      A2($List.filter,
+      tldFilter,
+      A2($List.filter,
+      stringHasContent(model.filterQuery.string),
+      $Set.toList(A2($Set.remove,
+      "",
+      $Set.fromList($List.concat(A2($List.map,
+      contactToTLDMapper,
+      model.contacts))))))));
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.div,
+              _U.list([]),
+              _U.list([indexButton(address)
+                      ,A2($Html.div,
+                      _U.list([]),
+                      _U.list([A2(filterField,address,model)]))]))
+              ,A2($Html.ul,_U.list([]),tldsHtml)]));
+   });
+   var view = F2(function (address,model) {
+      var viewFinder = function () {
+         var _p11 = model.viewMode;
+         switch (_p11.ctor)
+         {case "Index": return viewIndex;
+            case "ViewCategory": return viewCategory(_p11._0);
+            case "ViewEmailList": return viewEmailList(_p11._0);
+            case "ViewAllContacts": return viewAllContacts;
+            case "ViewAllCompanies": return viewCompanies;
+            case "ViewTLDs": return viewTLDs;
+            default: return viewCompanyTLDs;}
+      }()(address);
+      return viewFinder(model);
    });
    var importUrl = "https://contactsampleprovider.herokuapp.com";
    var getContacts = $Effects.task(A2($Task.map,
@@ -13432,12 +13568,21 @@ Elm.ContactBook.make = function (_elm) {
          case "ShowCategory": return {ctor: "_Tuple2"
                                      ,_0: _U.update(model,{viewMode: ViewCategory(_p12._0)})
                                      ,_1: $Effects.none};
+         case "ShowEmailList": return {ctor: "_Tuple2"
+                                      ,_0: _U.update(model,{viewMode: ViewEmailList(_p12._0)})
+                                      ,_1: $Effects.none};
          case "ShowAllContacts": return {ctor: "_Tuple2"
                                         ,_0: _U.update(model,{viewMode: ViewAllContacts})
                                         ,_1: $Effects.none};
          case "ShowAllCompanies": return {ctor: "_Tuple2"
                                          ,_0: _U.update(model,{viewMode: ViewAllCompanies})
                                          ,_1: $Effects.none};
+         case "ShowTLDs": return {ctor: "_Tuple2"
+                                 ,_0: _U.update(model,{viewMode: ViewTLDs})
+                                 ,_1: $Effects.none};
+         case "ShowCompanyTLDs": return {ctor: "_Tuple2"
+                                        ,_0: _U.update(model,{viewMode: ViewCompanyTLDs})
+                                        ,_1: $Effects.none};
          case "AddContact": var newContact = A2(initContact,
            model.nextContactID,
            {ctor: "_Tuple7"
@@ -13477,14 +13622,18 @@ Elm.ContactBook.make = function (_elm) {
    });
    return _elm.ContactBook.values = {_op: _op
                                     ,importUrl: importUrl
+                                    ,domainsToFilter: domainsToFilter
                                     ,Model: Model
                                     ,Category: Category
                                     ,Contact: Contact
                                     ,ContactContent: ContactContent
                                     ,Index: Index
                                     ,ViewCategory: ViewCategory
+                                    ,ViewEmailList: ViewEmailList
                                     ,ViewAllContacts: ViewAllContacts
                                     ,ViewAllCompanies: ViewAllCompanies
+                                    ,ViewTLDs: ViewTLDs
+                                    ,ViewCompanyTLDs: ViewCompanyTLDs
                                     ,init: init
                                     ,initCategory: initCategory
                                     ,initContact: initContact
@@ -13494,8 +13643,11 @@ Elm.ContactBook.make = function (_elm) {
                                     ,ProcessImport: ProcessImport
                                     ,ShowIndex: ShowIndex
                                     ,ShowCategory: ShowCategory
+                                    ,ShowEmailList: ShowEmailList
                                     ,ShowAllContacts: ShowAllContacts
                                     ,ShowAllCompanies: ShowAllCompanies
+                                    ,ShowTLDs: ShowTLDs
+                                    ,ShowCompanyTLDs: ShowCompanyTLDs
                                     ,Filter: Filter
                                     ,RemoveCategory: RemoveCategory
                                     ,ModifyCategoryName: ModifyCategoryName
@@ -13509,7 +13661,10 @@ Elm.ContactBook.make = function (_elm) {
                                     ,viewIndex: viewIndex
                                     ,viewForCategory: viewForCategory
                                     ,viewCategory: viewCategory
+                                    ,viewEmailList: viewEmailList
                                     ,viewCompanies: viewCompanies
+                                    ,viewTLDs: viewTLDs
+                                    ,viewCompanyTLDs: viewCompanyTLDs
                                     ,viewAllContacts: viewAllContacts
                                     ,viewForContact: viewForContact
                                     ,viewForContactContent: viewForContactContent
