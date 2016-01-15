@@ -180,3 +180,11 @@ h3 .color {
 	padding: 7px !important;
 	width: 60% !important;
 }
+
+ul.plain li {
+	padding: 5px 0;
+}
+
+.category_wrapper {
+	border-right: 2px solid;
+}

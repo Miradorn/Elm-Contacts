@@ -136,6 +136,7 @@ type Action
   | ModifyCategoryName ID Content
   | ModifyCategoryColor ID Content
   | AddContact Category
+  | RemoveContact ID
   | ModifyContactName ID Content
   | ModifyContactBirthday ID Content
   | ModifyContactCompany ID Content
@@ -206,6 +207,10 @@ update action model =
           | contacts = newContacts
           , nextContactID = model.nextContactID + 1
         }, Effects.none)
+    RemoveContact id ->
+      ({ model |
+          contacts = List.filter (\(con) -> id /= con.id) model.contacts
+      }, Effects.none)
     ModifyContactName id name ->
       let updateContact contactModel =
         if contactModel.id == id then
@@ -268,7 +273,8 @@ viewIndex address model =
     showCompanyTLDsButton = button [ onClick address ShowCompanyTLDs ] [ text "Show Company TLDs" ]
   in
     div [class "container"]
-      [ div [class "filter_field"] [ filterField address model]
+      [ h3 [] [text "All categories" ]
+      , div [class "filter_field"] [ filterField address model]
       , div [class "actions"]
         [ importButton
         , insert
@@ -366,12 +372,12 @@ viewCompanies address model =
     filteredCompanies = List.filter (stringHasContent model.filterQuery.string) companies
     companiesHtml = List.map (\company -> li [] [text company]) filteredCompanies
   in
-    div []
-    [ div []
-      [ indexButton address
-      , div [] [ filterField address model ]
-      ]
-    , ul [] companiesHtml
+    div [class "container"]
+      [ h3 [] [ text ("All companies") ]
+      , div [class "filter_field"] [ filterField address model]
+      , div [class "actions"] [indexButton address]
+      , hr [] []
+      , ul [class "plain"] companiesHtml
     ]
 
 viewTLDs : Signal.Address Action -> Model -> Html
@@ -394,12 +400,12 @@ viewTLDs address model =
       |> List.filter (stringHasContent model.filterQuery.string)
       |> List.map (\tld -> li [] [text tld])
   in
-    div []
-    [ div []
-      [ indexButton address
-      , div [] [ filterField address model ]
-      ]
-    , ul [] tldsHtml
+    div [class "container"]
+      [ h3 [] [ text ("All TLDs") ]
+      , div [class "filter_field"] [ filterField address model]
+      , div [class "actions"] [indexButton address]
+      , hr [] []
+      , ul [class "plain"] tldsHtml
     ]
 
 viewCompanyTLDs : Signal.Address Action -> Model -> Html
@@ -427,12 +433,12 @@ viewCompanyTLDs address model =
       |> List.filter tldFilter
       |> List.map (\tld -> li [] [text tld])
   in
-    div []
-    [ div []
-      [ indexButton address
-      , div [] [ filterField address model ]
-      ]
-    , ul [] tldsHtml
+    div [class "container"]
+      [ h3 [] [ text ("Company TLDs") ]
+      , div [class "filter_field"] [ filterField address model]
+      , div [class "actions"] [indexButton address]
+      , hr [] []
+      , ul [class "plain"] tldsHtml
     ]
 
 viewAllContacts : Signal.Address Action -> Model -> Html
@@ -440,12 +446,13 @@ viewAllContacts address model =
   let
     filteredContacts = List.filter (contactHasContent model.filterQuery.string) model.contacts
     colorToContacts = List.map (\cat -> (cat.color.string, contactsWithCategory filteredContacts cat.id)) model.categories |> Dict.fromList
-    colorsToHTML = Dict.map (\color -> \conts -> div [style [("color", color)]] (List.map (viewForContact address) conts)) colorToContacts
+    colorsToHTML = Dict.map (\color -> \conts -> ul [class "category_wrapper", style [("border-color", color)]] (List.map (viewForContact address) conts)) colorToContacts
     contactsHtml = Dict.values colorsToHTML
   in
     div [class "container"]
       [ h3 [] [ text ("All contacts") ]
-      , div [] [ indexButton address, filterField address model ]
+      , div [class "filter_field"] [ filterField address model ]
+      , div [class "actions"] [ indexButton address ]
       , hr [] []
       , div [] contactsHtml
       ]
@@ -470,6 +477,8 @@ viewForContact address contact =
     phones = List.map contentViewMapper contact.phones
     mails = List.map contentViewMapper contact.emails
 
+    deleteButton = button [onClick address (RemoveContact contact.id)] [ text "Delete" ]
+
     dL =
       [ ("Name", fromElement nameField)
       , ("Company", fromElement companyField)
@@ -477,6 +486,7 @@ viewForContact address contact =
       , ("Addresses", ul [] addresses)
       , ("Phone numbers", ul [] phones)
       , ("E-Mails", ul [] mails)
+      , ("Actions", span [] [deleteButton])
       ]
   in
     li [] [ ul [class "contact"] (buildDL dL) ]
