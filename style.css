@@ -8,6 +8,7 @@
 body {
 	font-family: Roboto, sans-serif;
 	font-size: 16px;
+	color: #444;
 }
 
 .container {
@@ -34,6 +35,10 @@ body {
 	text-align: center;
 }
 
+.actions button {
+	margin-bottom: 10px;
+}
+
 button {
 	border-radius: 5px;
 	font-size: 16px;
@@ -46,7 +51,7 @@ button {
 }
 
 .actions button:not(:last-child) {
-	margin-right: 20px;
+	margin-right: 10px;
 }
 
 h1, h2 {
@@ -97,6 +102,10 @@ hr {
 	margin-right: 10px;
 }
 
+h3 .color {
+	margin-left: 20px;
+}
+
 .category {
 	display: flex;
 	flex-wrap: wrap;
@@ -128,4 +137,34 @@ hr {
 .category button {
 	height: 30px !important;
 	padding-top: 5px;
+}
+
+.contact {
+	border-bottom: 1px solid #ECF0F1;
+	padding: 15px 0;
+}
+
+.contact > li {
+	display: flex;
+	padding: 5px 0;
+	line-height: 140%;
+}
+
+.contact h4 {
+	width: 130px;
+	font-weight: 300;
+}
+
+.contact div {
+	flex-grow: 1;
+}
+
+.contact input {
+	border: none !important;
+	border-bottom: 1px solid #2C3E50 !important;
+	border-radius: 0 !important;
+	font-size: 16px;
+	font-family: Roboto;
+	padding: 7px !important;
+	width: 60% !important;
 }

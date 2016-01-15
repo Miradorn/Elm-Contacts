@@ -449,26 +449,24 @@ viewForContact address contact =
 
     contentViewMapper = viewForContactContent address
 
+    buildDL =
+      List.map (\ (name, value) -> li [] [h4 [] [text(name)], div [class "info"] [value]])
+
     addresses = List.map contentViewMapper contact.addresses
     phones = List.map contentViewMapper contact.phones
     mails = List.map contentViewMapper contact.emails
-  in
-    li []
-      [ div [] [text ("name:" ++ name ++ ", company: " ++ company) ]
-      , fromElement nameField
-      , fromElement companyField
-      , div [] [text "birthday:", fromElement birthdayField]
-      , ul []
-        [ text "Addresses"
-        , ul [] addresses
-        , text "Phone Numbers"
-        , ul [] phones
-        , text "Emails"
-        , ul [] mails
-        ]
 
-
+    dL =
+      [ ("Name", fromElement nameField)
+      , ("Company", fromElement companyField)
+      , ("Birthday", fromElement birthdayField)
+      , ("Addresses", ul [] addresses)
+      , ("Phone numbers", ul [] phones)
+      , ("E-Mails", ul [] mails)
       ]
+  in
+    li [] [ ul [class "contact"] (buildDL dL) ]
+
 
 viewForContactContent : Signal.Address Action -> ContactContent -> Html
 viewForContactContent address content =
