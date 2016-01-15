@@ -50,11 +50,12 @@ type alias Contact =
   , emails : List ContactContent
   , birthday : Content
   , category : ID
+  , categoryObject : Maybe Category
   , id : ID
   }
 
 type alias ContactContent =
-  { text : String
+  { text : Content
   , id : ID
   , contact : ID
   }
@@ -70,6 +71,8 @@ type ViewMode
 
 
 type alias ID = Int
+
+emptySelection = Selection 0 0 Forward
 
 init : ( Model, Effects Action )
 init =
@@ -97,8 +100,6 @@ initCategory ( name, color, id ) =
 initContact :  ID -> ContactImportType -> Contact
 initContact id ( name, company, addresses, phones, mails, birthday, category) =
   let
-    emptySelection = Selection 0 0 Forward
-
     contentInitializer = initContactContent id
 
     newAddresses = List.indexedMap contentInitializer addresses
@@ -112,12 +113,13 @@ initContact id ( name, company, addresses, phones, mails, birthday, category) =
     , emails = newMails
     , birthday = Content birthday emptySelection
     , category = category
+    , categoryObject = Nothing
     , id = id
     }
 
 initContactContent :  ID -> ID -> String -> ContactContent
 initContactContent contact id text =
-  {id = id, contact = contact, text = text }
+  {id = id, contact = contact, text = Content text emptySelection}
 -- UPDATE
 
 type Action
@@ -140,6 +142,7 @@ type Action
   | ModifyContactName ID Content
   | ModifyContactBirthday ID Content
   | ModifyContactCompany ID Content
+  | ModifyContactContent ContactContent Content
 
 update : Action -> Model -> ( Model, Effects Action )
 update action model =
@@ -235,6 +238,35 @@ update action model =
           contactModel
       in
         ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
+    ModifyContactContent contactContent realContent ->
+      let
+        updateFuncs = [
+          (\con -> con.addresses, \con val -> {con | addresses = val}),
+          (\con -> con.phones, \con val -> {con | phones = val}),
+          (\con -> con.emails, \con val -> {con | emails = val})
+        ]
+
+        updateContactModel (accessCon, updateCon) contactModel =
+          let
+            contentList = accessCon contactModel
+            updatedContentList =
+              if contactModel.id == contactContent.contact then
+                List.map (updateFunc) contentList
+              else
+                contentList
+          in
+            updateCon contactModel updatedContentList
+
+        updateContact contactModel =
+          List.foldl updateContactModel contactModel updateFuncs
+
+        updateFunc content =
+          if content == contactContent then
+            { contactContent | text = realContent }
+          else
+            content
+      in
+        ({ model | contacts = List.map updateContact model.contacts}, Effects.none)
 
 -- VIEW
 
@@ -337,7 +369,7 @@ viewEmailList category address  model =
     notEmpty string = not (String.isEmpty string)
     mailGrabber contact =
       List.head contact.emails
-        |> Maybe.map (\n -> n.text)
+        |> Maybe.map (\n -> n.text.string)
         |> Maybe.withDefault ""
 
     mappedContacts = contactsWithCategory model.contacts category.id
@@ -384,7 +416,7 @@ viewTLDs : Signal.Address Action -> Model -> Html
 viewTLDs address model =
   let
     tldMapper email =
-      email.text
+      email.text.string
         |> String.split "@"
         |> List.drop 1
         |> List.head
@@ -412,7 +444,7 @@ viewCompanyTLDs : Signal.Address Action -> Model -> Html
 viewCompanyTLDs address model =
   let
     tldMapper email =
-      email.text
+      email.text.string
         |> String.split "@"
         |> List.drop 1
         |> List.head
@@ -445,17 +477,26 @@ viewAllContacts : Signal.Address Action -> Model -> Html
 viewAllContacts address model =
   let
     filteredContacts = List.filter (contactHasContent model.filterQuery.string) model.contacts
-    colorToContacts = List.map (\cat -> (cat.color.string, contactsWithCategory filteredContacts cat.id)) model.categories |> Dict.fromList
-    colorsToHTML = Dict.map (\color -> \conts -> ul [class "category_wrapper", style [("border-color", color)]] (List.map (viewForContact address) conts)) colorToContacts
-    contactsHtml = Dict.values colorsToHTML
+    --colorToContacts = List.map (\cat -> (cat.color.string, contactsWithCategory filteredContacts cat.id)) model.categories |> Dict.fromList
+    --colorsToHTML = Dict.map (\color -> \conts -> ul [class "category_wrapper", style [("border-color", color)]] ) colorToContacts
+    contactsHtml = List.map (contactsWithCategories model >> viewForContact address) filteredContacts
+
+
   in
     div [class "container"]
       [ h3 [] [ text ("All contacts") ]
       , div [class "filter_field"] [ filterField address model ]
       , div [class "actions"] [ indexButton address ]
       , hr [] []
-      , div [] contactsHtml
+      , ul [class "category_wrapper"] contactsHtml
       ]
+
+contactsWithCategories : Model -> Contact -> Contact
+contactsWithCategories model contact =
+  let
+    category = List.head (List.filter (\cat -> cat.id == contact.category) model.categories)
+  in
+    {contact | categoryObject = category}
 
 viewForContact : Signal.Address Action -> Contact -> Html
 viewForContact address contact =
@@ -488,13 +529,17 @@ viewForContact address contact =
       , ("E-Mails", ul [] mails)
       , ("Actions", span [] [deleteButton])
       ]
-  in
-    li [] [ ul [class "contact"] (buildDL dL) ]
 
+    dLC = case contact.categoryObject of
+      Just cat -> (List.append dL [("Category",  p [] [span [class "color", style [("background-color", cat.color.string)]] [], text cat.name.string])])
+      Nothing -> dL
+
+  in
+    li [] [ ul [class "contact"] (buildDL dLC) ]
 
 viewForContactContent : Signal.Address Action -> ContactContent -> Html
 viewForContactContent address content =
-  li [] [ text (content.text ++ " id: " ++ (toString content.id)) ]
+  li [] [ fromElement (field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactContent content))) "content" content.text) ]
 
 
 -- STYLES
@@ -536,7 +581,7 @@ contactHasContent : String -> Contact -> Bool
 contactHasContent query contact =
   let
     contentContactFilter content =
-      stringHasContent query content.text
+      stringHasContent query content.text.string
 
   in
     stringsHaveContent query
