@@ -6,8 +6,12 @@ var browserSync = require('browser-sync').create();
 gulp.task('elm', function () {
     return gulp.src('Main.elm')
         .pipe(elm.make())
+        .on("error", function(err) {
+            console.log(err.message);
+            this.emit('end');
+            })
         .pipe(rename({basename: 'elm'}))
-        .pipe(gulp.dest('./'));
+        .pipe(gulp.dest('./'))
 });
 
 gulp.task('elm-watch', ['elm'], function(finish) {
