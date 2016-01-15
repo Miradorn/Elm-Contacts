@@ -137,6 +137,7 @@ type Action
   | ModifyCategoryColor ID Content
   | AddContact Category
   | ModifyContactName ID Content
+  | ModifyContactBirthday ID Content
   | ModifyContactCompany ID Content
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -213,6 +214,14 @@ update action model =
           contactModel
       in
         ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
+    ModifyContactBirthday id date ->
+      let updateContact contactModel =
+        if contactModel.id == id then
+          {contactModel | birthday = date}
+        else
+          contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts}, Effects.none)
     ModifyContactCompany id company ->
       let updateContact contactModel =
         if contactModel.id == id then
@@ -445,7 +454,7 @@ viewForContact address contact =
     company = contact.company.string
     companyField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactCompany contact.id))) "Name" contact.company
 
-    birthdayField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactName contact.id))) "Birthday" contact.birthday
+    birthdayField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactBirthday contact.id))) "Birthday" contact.birthday
 
     contentViewMapper = viewForContactContent address
 

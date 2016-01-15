@@ -12969,6 +12969,9 @@ Elm.ContactBook.make = function (_elm) {
    var ModifyContactCompany = F2(function (a,b) {
       return {ctor: "ModifyContactCompany",_0: a,_1: b};
    });
+   var ModifyContactBirthday = F2(function (a,b) {
+      return {ctor: "ModifyContactBirthday",_0: a,_1: b};
+   });
    var ModifyContactName = F2(function (a,b) {
       return {ctor: "ModifyContactName",_0: a,_1: b};
    });
@@ -12992,7 +12995,7 @@ Elm.ContactBook.make = function (_elm) {
       $Graphics$Input$Field.defaultStyle,
       $Signal.message(A2($Signal.forwardTo,
       address,
-      ModifyContactName(contact.id))),
+      ModifyContactBirthday(contact.id))),
       "Birthday",
       contact.birthday);
       var companyField = A4($Graphics$Input$Field.field,
@@ -13619,6 +13622,16 @@ Elm.ContactBook.make = function (_elm) {
                   ,_0: _U.update(model,
                   {contacts: A2($List.map,updateContact,model.contacts)})
                   ,_1: $Effects.none};
+         case "ModifyContactBirthday":
+         var updateContact = function (contactModel) {
+              return _U.eq(contactModel.id,
+              _p14._0) ? _U.update(contactModel,
+              {birthday: _p14._1}) : contactModel;
+           };
+           return {ctor: "_Tuple2"
+                  ,_0: _U.update(model,
+                  {contacts: A2($List.map,updateContact,model.contacts)})
+                  ,_1: $Effects.none};
          default: var updateContact = function (contactModel) {
               return _U.eq(contactModel.id,
               _p14._0) ? _U.update(contactModel,
@@ -13663,6 +13676,7 @@ Elm.ContactBook.make = function (_elm) {
                                     ,ModifyCategoryColor: ModifyCategoryColor
                                     ,AddContact: AddContact
                                     ,ModifyContactName: ModifyContactName
+                                    ,ModifyContactBirthday: ModifyContactBirthday
                                     ,ModifyContactCompany: ModifyContactCompany
                                     ,update: update
                                     ,blankStyle: blankStyle
