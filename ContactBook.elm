@@ -479,7 +479,7 @@ viewAllContacts address model =
     filteredContacts = List.filter (contactHasContent model.filterQuery.string) model.contacts
     --colorToContacts = List.map (\cat -> (cat.color.string, contactsWithCategory filteredContacts cat.id)) model.categories |> Dict.fromList
     --colorsToHTML = Dict.map (\color -> \conts -> ul [class "category_wrapper", style [("border-color", color)]] ) colorToContacts
-    contactsHtml = List.map (contactsWithCategories model >> viewForContact address) filteredContacts
+    contactsHtml = List.map (contactWithCategory model >> viewForContact address) filteredContacts
 
 
   in
@@ -490,13 +490,6 @@ viewAllContacts address model =
       , hr [] []
       , ul [class "category_wrapper"] contactsHtml
       ]
-
-contactsWithCategories : Model -> Contact -> Contact
-contactsWithCategories model contact =
-  let
-    category = List.head (List.filter (\cat -> cat.id == contact.category) model.categories)
-  in
-    {contact | categoryObject = category}
 
 viewForContact : Signal.Address Action -> Contact -> Html
 viewForContact address contact =
@@ -565,6 +558,13 @@ filterField address model =
 
 indexButton : Signal.Address Action -> Html
 indexButton address = button [onClick address ShowIndex] [ text "Index"]
+
+contactWithCategory : Model -> Contact -> Contact
+contactWithCategory model contact =
+  let
+    category = List.head (List.filter (\cat -> cat.id == contact.category) model.categories)
+  in
+    {contact | categoryObject = category}
 
 contactsWithCategory : List Contact -> ID -> List Contact
 contactsWithCategory contacts categoryID =

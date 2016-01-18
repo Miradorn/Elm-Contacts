@@ -11616,16 +11616,16 @@ Elm.ContactBook.make = function (_elm) {
    var contactsWithCategory = F2(function (contacts,categoryID) {
       return A2($List.filter,function (contact) {    return _U.eq(contact.category,categoryID);},contacts);
    });
+   var contactWithCategory = F2(function (model,contact) {
+      var category = $List.head(A2($List.filter,function (cat) {    return _U.eq(cat.id,contact.category);},model.categories));
+      return _U.update(contact,{categoryObject: category});
+   });
    var listStyle = function (color) {
       return $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
                                             ,{ctor: "_Tuple2",_0: "font-family",_1: "monospace"}
                                             ,{ctor: "_Tuple2",_0: "color",_1: color}
                                             ,{ctor: "_Tuple2",_0: "background-color",_1: "black"}]));
    };
-   var contactsWithCategories = F2(function (model,contact) {
-      var category = $List.head(A2($List.filter,function (cat) {    return _U.eq(cat.id,contact.category);},model.categories));
-      return _U.update(contact,{categoryObject: category});
-   });
    var blankStyle = {padding: $Graphics$Input$Field.uniformly(0)
                     ,outline: $Graphics$Input$Field.noOutline
                     ,highlight: $Graphics$Input$Field.noHighlight
@@ -11823,7 +11823,7 @@ Elm.ContactBook.make = function (_elm) {
    });
    var viewAllContacts = F2(function (address,model) {
       var filteredContacts = A2($List.filter,contactHasContent(model.filterQuery.string),model.contacts);
-      var contactsHtml = A2($List.map,function (_p4) {    return A2(viewForContact,address,A2(contactsWithCategories,model,_p4));},filteredContacts);
+      var contactsHtml = A2($List.map,function (_p4) {    return A2(viewForContact,address,A2(contactWithCategory,model,_p4));},filteredContacts);
       return A2($Html.div,
       _U.list([$Html$Attributes.$class("container")]),
       _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("All contacts")]))
@@ -12089,13 +12089,13 @@ Elm.ContactBook.make = function (_elm) {
                                     ,viewTLDs: viewTLDs
                                     ,viewCompanyTLDs: viewCompanyTLDs
                                     ,viewAllContacts: viewAllContacts
-                                    ,contactsWithCategories: contactsWithCategories
                                     ,viewForContact: viewForContact
                                     ,viewForContactContent: viewForContactContent
                                     ,listStyle: listStyle
                                     ,queryUpdateMessage: queryUpdateMessage
                                     ,filterField: filterField
                                     ,indexButton: indexButton
+                                    ,contactWithCategory: contactWithCategory
                                     ,contactsWithCategory: contactsWithCategory
                                     ,categoryHasContent: categoryHasContent
                                     ,contactHasContent: contactHasContent
