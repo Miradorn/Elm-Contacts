@@ -567,7 +567,7 @@ viewCompanyTLDs address model =
 viewAllContacts : Signal.Address Action -> Model -> Html
 viewAllContacts address model =
   let
-    filteredContacts = List.filter (contactHasContent model.filterQuery.string) model.contacts
+    filteredContacts = List.filter (contactWithCategory model >> contactHasContent model.filterQuery.string) model.contacts
     --colorToContacts = List.map (\cat -> (cat.color.string, contactsWithCategory filteredContacts cat.id)) model.categories |> Dict.fromList
     --colorsToHTML = Dict.map (\color -> \conts -> ul [class "category_wrapper", style [("border-color", color)]] ) colorToContacts
     contactsHtml = List.map (contactWithCategory model >> viewForContact address) filteredContacts
@@ -678,6 +678,10 @@ contactHasContent query contact =
     contentContactFilter content =
       stringHasContent query content.text.string
 
+    inCategory = case contact.categoryObject of
+      Just cat -> categoryHasContent query cat
+      Nothing -> False
+
   in
     stringsHaveContent query
       [ contact.name.string
@@ -686,6 +690,7 @@ contactHasContent query contact =
     || List.any contentContactFilter contact.addresses
     || List.any contentContactFilter contact.emails
     || List.any contentContactFilter contact.phones
+    || inCategory
 
 stringsHaveContent : String -> List String -> Bool
 stringsHaveContent query strings = List.any (stringHasContent query) strings
