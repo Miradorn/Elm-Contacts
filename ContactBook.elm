@@ -295,7 +295,7 @@ view address model =
 viewIndex : Signal.Address Action -> Model -> Html
 viewIndex address model =
   let
-    filteredCategories = List.filter (categoryHasContent model.filterQuery.string) model.categories
+    filteredCategories = List.filter (categoryHasContent model.filterQuery.string) model.categories |> List.reverse
     categories = List.map (\cat -> viewForCategory address cat) filteredCategories
     insert = button [ onClick address Insert ] [ text "Add" ]
     importButton = button [ onClick address StartImport ] [ text "Import" ]
