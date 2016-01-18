@@ -138,6 +138,12 @@ type Action
   | ModifyCategoryName ID Content
   | ModifyCategoryColor ID Content
   | AddContact Category
+  | AddAddress ID
+  | AddPhone ID
+  | AddEmail ID
+  | RemoveAddress ID ID
+  | RemovePhone ID ID
+  | RemoveEmail ID ID
   | RemoveContact ID
   | ModifyContactName ID Content
   | ModifyContactBirthday ID Content
@@ -210,9 +216,93 @@ update action model =
           | contacts = newContacts
           , nextContactID = model.nextContactID + 1
         }, Effects.none)
+    AddAddress id ->
+      let
+        contacts = List.filter (\con -> id == con.id) model.contacts
+        oldAddresses = List.map (\con -> con.addresses) contacts
+          |> List.concat
+        newAddresses = (initContactContent id (maxContentId oldAddresses + 1) "Address") :: oldAddresses
+
+        updateContact contactModel =
+          if contactModel.id == id then
+            {contactModel | addresses = newAddresses}
+          else
+            contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
+    AddPhone id ->
+      let
+        contacts = List.filter (\con -> id == con.id) model.contacts
+        oldPhones = List.map (\con -> con.phones) contacts
+          |> List.concat
+        newPhones = (initContactContent id (maxContentId oldPhones + 1) "Phone") :: oldPhones
+
+        updateContact contactModel =
+          if contactModel.id == id then
+            {contactModel | phones = newPhones}
+          else
+            contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
+    AddEmail id ->
+      let
+        contacts = List.filter (\con -> id == con.id) model.contacts
+        oldEmails = List.map (\con -> con.emails) contacts
+          |> List.concat
+        newEmails = (initContactContent id (maxContentId oldEmails + 1) "Email") :: oldEmails
+
+        updateContact contactModel =
+          if contactModel.id == id then
+            {contactModel | emails = newEmails}
+          else
+            contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
+    RemoveAddress contactID addressID ->
+      let
+        contacts = List.filter (\con -> contactID == con.id) model.contacts
+        oldAddresses = List.map (\con -> con.addresses) contacts
+          |> List.concat
+        newAddresses = List.filter (\con -> addressID /= con.id) oldAddresses
+
+        updateContact contactModel =
+          if contactModel.id == contactID then
+            {contactModel | addresses = newAddresses}
+          else
+            contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
+    RemoveEmail contactID emailID ->
+      let
+        contacts = List.filter (\con -> contactID == con.id) model.contacts
+        oldEmails = List.map (\con -> con.emails) contacts
+          |> List.concat
+        newEmails = List.filter (\con -> emailID /= con.id) oldEmails
+
+        updateContact contactModel =
+          if contactModel.id == contactID then
+            {contactModel | emails = newEmails}
+          else
+            contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
+    RemovePhone contactID phoneID ->
+      let
+        contacts = List.filter (\con -> contactID == con.id) model.contacts
+        oldPhones = List.map (\con -> con.phones) contacts
+          |> List.concat
+        newPhones = List.filter (\con -> phoneID /= con.id) oldPhones
+
+        updateContact contactModel =
+          if contactModel.id == contactID then
+            {contactModel | phones = newPhones}
+          else
+            contactModel
+      in
+        ({ model | contacts = List.map updateContact model.contacts }, Effects.none)
     RemoveContact id ->
       ({ model |
-          contacts = List.filter (\(con) -> id /= con.id) model.contacts
+          contacts = List.filter (\con -> id /= con.id) model.contacts
       }, Effects.none)
     ModifyContactName id name ->
       let updateContact contactModel =
@@ -519,6 +609,10 @@ viewForContact address contact =
     mails = List.map contentViewMapper contact.emails
 
     deleteButton = button [onClick address (RemoveContact contact.id)] [ text "Delete" ]
+    addAddressButton = button [onClick address (AddAddress contact.id)] [ text "Add address" ]
+    addEmailButton = button [onClick address (AddEmail contact.id)] [ text "Add email" ]
+    addPhoneButton = button [onClick address (AddPhone contact.id)] [ text "Add phone" ]
+
 
     dL =
       [ ("Name", fromElement nameField)
@@ -527,7 +621,7 @@ viewForContact address contact =
       , ("Addresses", ul [] addresses)
       , ("Phone numbers", ul [] phones)
       , ("E-Mails", ul [] mails)
-      , ("Actions", span [] [deleteButton])
+      , ("Actions", span [] [deleteButton, addAddressButton, addEmailButton, addPhoneButton])
       ]
 
     dLC = case contact.categoryObject of
@@ -539,21 +633,19 @@ viewForContact address contact =
 
 viewForContactContent : Signal.Address Action -> ContactContent -> Html
 viewForContactContent address content =
-  li [] [ fromElement (field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactContent content))) "content" content.text) ]
-
-
--- STYLES
-
-listStyle : String -> Attribute
-listStyle color =
-  style
-    [ ("font-size", "20px")
-    , ("font-family", "monospace")
-    , ("color", color)
-    , ("background-color", "black")
+  li []
+    [ fromElement (field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactContent content))) "content" content.text )
+    , text (toString content.id)
     ]
 
+
 -- HELPERS
+
+maxContentId : List ContactContent -> ID
+maxContentId list =
+  List.map .id list
+    |> List.maximum
+    |> Maybe.withDefault 0
 
 queryUpdateMessage : Signal.Address Action -> Content -> Signal.Message
 queryUpdateMessage address content =
