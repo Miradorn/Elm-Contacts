@@ -12946,6 +12946,14 @@ Elm.ContactBook.make = function (_elm) {
       },
       contacts);
    });
+   var contactWithCategory = F2(function (model,contact) {
+      var category = $List.head(A2($List.filter,
+      function (cat) {
+         return _U.eq(cat.id,contact.category);
+      },
+      model.categories));
+      return _U.update(contact,{categoryObject: category});
+   });
    var maxContentId = function (list) {
       return A2($Maybe.withDefault,
       0,
@@ -12955,14 +12963,6 @@ Elm.ContactBook.make = function (_elm) {
       },
       list)));
    };
-   var contactsWithCategories = F2(function (model,contact) {
-      var category = $List.head(A2($List.filter,
-      function (cat) {
-         return _U.eq(cat.id,contact.category);
-      },
-      model.categories));
-      return _U.update(contact,{categoryObject: category});
-   });
    var blankStyle = {padding: $Graphics$Input$Field.uniformly(0)
                     ,outline: $Graphics$Input$Field.noOutline
                     ,highlight: $Graphics$Input$Field.noHighlight
@@ -13375,7 +13375,7 @@ Elm.ContactBook.make = function (_elm) {
       function (_p4) {
          return A2(viewForContact,
          address,
-         A2(contactsWithCategories,model,_p4));
+         A2(contactWithCategory,model,_p4));
       },
       filteredContacts);
       return A2($Html.div,
@@ -13418,9 +13418,9 @@ Elm.ContactBook.make = function (_elm) {
       var insert = A2($Html.button,
       _U.list([A2($Html$Events.onClick,address,Insert)]),
       _U.list([$Html.text("Add")]));
-      var filteredCategories = A2($List.filter,
+      var filteredCategories = $List.reverse(A2($List.filter,
       categoryHasContent(model.filterQuery.string),
-      model.categories);
+      model.categories));
       var categories = A2($List.map,
       function (cat) {
          return A2(viewForCategory,address,cat);
@@ -14017,13 +14017,13 @@ Elm.ContactBook.make = function (_elm) {
                                     ,viewTLDs: viewTLDs
                                     ,viewCompanyTLDs: viewCompanyTLDs
                                     ,viewAllContacts: viewAllContacts
-                                    ,contactsWithCategories: contactsWithCategories
                                     ,viewForContact: viewForContact
                                     ,viewForContactContent: viewForContactContent
                                     ,maxContentId: maxContentId
                                     ,queryUpdateMessage: queryUpdateMessage
                                     ,filterField: filterField
                                     ,indexButton: indexButton
+                                    ,contactWithCategory: contactWithCategory
                                     ,contactsWithCategory: contactsWithCategory
                                     ,categoryHasContent: categoryHasContent
                                     ,contactHasContent: contactHasContent
