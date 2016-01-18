@@ -146,7 +146,7 @@ h3 .color {
 	font-weight: 300 !important;
 }
 
-.category button {
+.category button, button.small {
 	height: 30px !important;
 	padding-top: 5px;
 }
@@ -179,6 +179,10 @@ h3 .color {
 	font-family: Roboto;
 	padding: 7px !important;
 	width: 60% !important;
+}
+
+.contact button {
+	margin-left: 10px;
 }
 
 ul.plain li {

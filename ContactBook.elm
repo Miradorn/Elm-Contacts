@@ -13,7 +13,6 @@ import Dict
 import Set
 import Text
 
-
 -- MODEL
 importUrl = "https://contactsampleprovider.herokuapp.com"
 domainsToFilter =
@@ -393,6 +392,8 @@ viewIndex address model =
     showCompaniesButton = button [ onClick address ShowAllCompanies ] [ text "Show All Companies" ]
     showTLDsButton = button [ onClick address ShowTLDs ] [ text "Show All TLDs" ]
     showCompanyTLDsButton = button [ onClick address ShowCompanyTLDs ] [ text "Show Company TLDs" ]
+
+
   in
     div [class "container"]
       [ h3 [] [text "All categories" ]
@@ -597,17 +598,16 @@ viewForContact address contact =
       List.map (\ (name, value) -> li [] [h4 [] [text(name)], div [class "info"] [value]])
 
     contentViewMapper remAddress content =
-       viewForContactContent address content (button [onClick address remAddress] [text "X"])
+       viewForContactContent address content (button [onClick address remAddress, class "small"] [text "X"])
 
     addresses = List.map (\content -> contentViewMapper (RemoveAddress contact.id content.id) content) contact.addresses
     phones = List.map (\content -> contentViewMapper (RemovePhone contact.id content.id) content) contact.phones
     mails = List.map (\content -> contentViewMapper (RemoveEmail contact.id content.id) content) contact.emails
 
-    deleteButton = button [onClick address (RemoveContact contact.id)] [ text "Delete" ]
-    addAddressButton = button [onClick address (AddAddress contact.id)] [ text "Add address" ]
-    addEmailButton = button [onClick address (AddEmail contact.id)] [ text "Add email" ]
-    addPhoneButton = button [onClick address (AddPhone contact.id)] [ text "Add phone" ]
-
+    deleteButton = button [onClick address (RemoveContact contact.id), class "small"] [ text "Delete" ]
+    addAddressButton = button [onClick address (AddAddress contact.id), class "small"] [ text "Add address" ]
+    addEmailButton = button [onClick address (AddEmail contact.id), class "small"] [ text "Add email" ]
+    addPhoneButton = button [onClick address (AddPhone contact.id), class "small"] [ text "Add phone" ]
 
     dL =
       [ ("Name", fromElement nameField)
@@ -616,7 +616,7 @@ viewForContact address contact =
       , ("Addresses", ul [] addresses)
       , ("Phone numbers", ul [] phones)
       , ("E-Mails", ul [] mails)
-      , ("Actions", span [] [deleteButton, addAddressButton, addEmailButton, addPhoneButton])
+      , ("Actions", span [class "contact_actions"] [deleteButton, addAddressButton, addEmailButton, addPhoneButton])
       ]
 
     dLC = case contact.categoryObject of
