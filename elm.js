@@ -11620,42 +11620,49 @@ Elm.ContactBook.make = function (_elm) {
       var category = $List.head(A2($List.filter,function (cat) {    return _U.eq(cat.id,contact.category);},model.categories));
       return _U.update(contact,{categoryObject: category});
    });
-   var listStyle = function (color) {
-      return $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "font-size",_1: "20px"}
-                                            ,{ctor: "_Tuple2",_0: "font-family",_1: "monospace"}
-                                            ,{ctor: "_Tuple2",_0: "color",_1: color}
-                                            ,{ctor: "_Tuple2",_0: "background-color",_1: "black"}]));
-   };
+   var maxContentId = function (list) {    return A2($Maybe.withDefault,0,$List.maximum(A2($List.map,function (_) {    return _.id;},list)));};
    var blankStyle = {padding: $Graphics$Input$Field.uniformly(0)
                     ,outline: $Graphics$Input$Field.noOutline
                     ,highlight: $Graphics$Input$Field.noHighlight
                     ,style: $Text.defaultStyle};
    var ModifyContactContent = F2(function (a,b) {    return {ctor: "ModifyContactContent",_0: a,_1: b};});
-   var viewForContactContent = F2(function (address,content) {
+   var viewForContactContent = F3(function (address,content,removeButton) {
       return A2($Html.li,
       _U.list([]),
       _U.list([$Html.fromElement(A4($Graphics$Input$Field.field,
-      $Graphics$Input$Field.defaultStyle,
-      $Signal.message(A2($Signal.forwardTo,address,ModifyContactContent(content))),
-      "content",
-      content.text))]));
+              $Graphics$Input$Field.defaultStyle,
+              $Signal.message(A2($Signal.forwardTo,address,ModifyContactContent(content))),
+              "content",
+              content.text))
+              ,removeButton]));
    });
    var ModifyContactCompany = F2(function (a,b) {    return {ctor: "ModifyContactCompany",_0: a,_1: b};});
    var ModifyContactBirthday = F2(function (a,b) {    return {ctor: "ModifyContactBirthday",_0: a,_1: b};});
    var ModifyContactName = F2(function (a,b) {    return {ctor: "ModifyContactName",_0: a,_1: b};});
    var RemoveContact = function (a) {    return {ctor: "RemoveContact",_0: a};};
+   var RemoveEmail = F2(function (a,b) {    return {ctor: "RemoveEmail",_0: a,_1: b};});
+   var RemovePhone = F2(function (a,b) {    return {ctor: "RemovePhone",_0: a,_1: b};});
+   var RemoveAddress = F2(function (a,b) {    return {ctor: "RemoveAddress",_0: a,_1: b};});
+   var AddEmail = function (a) {    return {ctor: "AddEmail",_0: a};};
+   var AddPhone = function (a) {    return {ctor: "AddPhone",_0: a};};
+   var AddAddress = function (a) {    return {ctor: "AddAddress",_0: a};};
    var viewForContact = F2(function (address,contact) {
+      var addPhoneButton = A2($Html.button,_U.list([A2($Html$Events.onClick,address,AddPhone(contact.id))]),_U.list([$Html.text("Add phone")]));
+      var addEmailButton = A2($Html.button,_U.list([A2($Html$Events.onClick,address,AddEmail(contact.id))]),_U.list([$Html.text("Add email")]));
+      var addAddressButton = A2($Html.button,_U.list([A2($Html$Events.onClick,address,AddAddress(contact.id))]),_U.list([$Html.text("Add address")]));
       var deleteButton = A2($Html.button,_U.list([A2($Html$Events.onClick,address,RemoveContact(contact.id))]),_U.list([$Html.text("Delete")]));
+      var contentViewMapper = F2(function (remAddress,content) {
+         return A3(viewForContactContent,address,content,A2($Html.button,_U.list([A2($Html$Events.onClick,address,remAddress)]),_U.list([$Html.text("X")])));
+      });
+      var addresses = A2($List.map,function (content) {    return A2(contentViewMapper,A2(RemoveAddress,contact.id,content.id),content);},contact.addresses);
+      var phones = A2($List.map,function (content) {    return A2(contentViewMapper,A2(RemovePhone,contact.id,content.id),content);},contact.phones);
+      var mails = A2($List.map,function (content) {    return A2(contentViewMapper,A2(RemoveEmail,contact.id,content.id),content);},contact.emails);
       var buildDL = $List.map(function (_p0) {
          var _p1 = _p0;
          return A2($Html.li,
          _U.list([]),
          _U.list([A2($Html.h4,_U.list([]),_U.list([$Html.text(_p1._0)])),A2($Html.div,_U.list([$Html$Attributes.$class("info")]),_U.list([_p1._1]))]));
       });
-      var contentViewMapper = viewForContactContent(address);
-      var addresses = A2($List.map,contentViewMapper,contact.addresses);
-      var phones = A2($List.map,contentViewMapper,contact.phones);
-      var mails = A2($List.map,contentViewMapper,contact.emails);
       var birthdayField = A4($Graphics$Input$Field.field,
       $Graphics$Input$Field.defaultStyle,
       $Signal.message(A2($Signal.forwardTo,address,ModifyContactBirthday(contact.id))),
@@ -11678,7 +11685,7 @@ Elm.ContactBook.make = function (_elm) {
                        ,{ctor: "_Tuple2",_0: "Addresses",_1: A2($Html.ul,_U.list([]),addresses)}
                        ,{ctor: "_Tuple2",_0: "Phone numbers",_1: A2($Html.ul,_U.list([]),phones)}
                        ,{ctor: "_Tuple2",_0: "E-Mails",_1: A2($Html.ul,_U.list([]),mails)}
-                       ,{ctor: "_Tuple2",_0: "Actions",_1: A2($Html.span,_U.list([]),_U.list([deleteButton]))}]);
+                       ,{ctor: "_Tuple2",_0: "Actions",_1: A2($Html.span,_U.list([]),_U.list([deleteButton,addAddressButton,addEmailButton,addPhoneButton]))}]);
       var dLC = function () {
          var _p2 = contact.categoryObject;
          if (_p2.ctor === "Just") {
@@ -11998,6 +12005,46 @@ Elm.ContactBook.make = function (_elm) {
            {ctor: "_Tuple7",_0: "",_1: "",_2: _U.list([]),_3: _U.list([]),_4: _U.list([]),_5: "",_6: _p17._0.id});
            var newContacts = A2($Basics._op["++"],_U.list([newContact]),model.contacts);
            return {ctor: "_Tuple2",_0: _U.update(model,{contacts: newContacts,nextContactID: model.nextContactID + 1}),_1: $Effects.none};
+         case "AddAddress": var _p19 = _p17._0;
+           var contacts = A2($List.filter,function (con) {    return _U.eq(_p19,con.id);},model.contacts);
+           var oldAddresses = $List.concat(A2($List.map,function (con) {    return con.addresses;},contacts));
+           var newAddresses = A2($List._op["::"],A3(initContactContent,_p19,maxContentId(oldAddresses) + 1,"Address"),oldAddresses);
+           var updateContact = function (contactModel) {
+              return _U.eq(contactModel.id,_p19) ? _U.update(contactModel,{addresses: newAddresses}) : contactModel;
+           };
+           return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};
+         case "AddPhone": var _p20 = _p17._0;
+           var contacts = A2($List.filter,function (con) {    return _U.eq(_p20,con.id);},model.contacts);
+           var oldPhones = $List.concat(A2($List.map,function (con) {    return con.phones;},contacts));
+           var newPhones = A2($List._op["::"],A3(initContactContent,_p20,maxContentId(oldPhones) + 1,"Phone"),oldPhones);
+           var updateContact = function (contactModel) {    return _U.eq(contactModel.id,_p20) ? _U.update(contactModel,{phones: newPhones}) : contactModel;};
+           return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};
+         case "AddEmail": var _p21 = _p17._0;
+           var contacts = A2($List.filter,function (con) {    return _U.eq(_p21,con.id);},model.contacts);
+           var oldEmails = $List.concat(A2($List.map,function (con) {    return con.emails;},contacts));
+           var newEmails = A2($List._op["::"],A3(initContactContent,_p21,maxContentId(oldEmails) + 1,"Email"),oldEmails);
+           var updateContact = function (contactModel) {    return _U.eq(contactModel.id,_p21) ? _U.update(contactModel,{emails: newEmails}) : contactModel;};
+           return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};
+         case "RemoveAddress": var _p22 = _p17._0;
+           var contacts = A2($List.filter,function (con) {    return _U.eq(_p22,con.id);},model.contacts);
+           var oldAddresses = $List.concat(A2($List.map,function (con) {    return con.addresses;},contacts));
+           var newAddresses = A2($List.filter,function (con) {    return !_U.eq(_p17._1,con.id);},oldAddresses);
+           var updateContact = function (contactModel) {
+              return _U.eq(contactModel.id,_p22) ? _U.update(contactModel,{addresses: newAddresses}) : contactModel;
+           };
+           return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};
+         case "RemoveEmail": var _p23 = _p17._0;
+           var contacts = A2($List.filter,function (con) {    return _U.eq(_p23,con.id);},model.contacts);
+           var oldEmails = $List.concat(A2($List.map,function (con) {    return con.emails;},contacts));
+           var newEmails = A2($List.filter,function (con) {    return !_U.eq(_p17._1,con.id);},oldEmails);
+           var updateContact = function (contactModel) {    return _U.eq(contactModel.id,_p23) ? _U.update(contactModel,{emails: newEmails}) : contactModel;};
+           return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};
+         case "RemovePhone": var _p24 = _p17._0;
+           var contacts = A2($List.filter,function (con) {    return _U.eq(_p24,con.id);},model.contacts);
+           var oldPhones = $List.concat(A2($List.map,function (con) {    return con.phones;},contacts));
+           var newPhones = A2($List.filter,function (con) {    return !_U.eq(_p17._1,con.id);},oldPhones);
+           var updateContact = function (contactModel) {    return _U.eq(contactModel.id,_p24) ? _U.update(contactModel,{phones: newPhones}) : contactModel;};
+           return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};
          case "RemoveContact": return {ctor: "_Tuple2"
                                       ,_0: _U.update(model,{contacts: A2($List.filter,function (con) {    return !_U.eq(_p17._0,con.id);},model.contacts)})
                                       ,_1: $Effects.none};
@@ -12013,13 +12060,13 @@ Elm.ContactBook.make = function (_elm) {
               return _U.eq(contactModel.id,_p17._0) ? _U.update(contactModel,{company: _p17._1}) : contactModel;
            };
            return {ctor: "_Tuple2",_0: _U.update(model,{contacts: A2($List.map,updateContact,model.contacts)}),_1: $Effects.none};
-         default: var _p21 = _p17._0;
-           var updateFunc = function (content) {    return _U.eq(content,_p21) ? _U.update(_p21,{text: _p17._1}) : content;};
-           var updateContactModel = F2(function (_p19,contactModel) {
-              var _p20 = _p19;
-              var contentList = _p20._0(contactModel);
-              var updatedContentList = _U.eq(contactModel.id,_p21.contact) ? A2($List.map,updateFunc,contentList) : contentList;
-              return A2(_p20._1,contactModel,updatedContentList);
+         default: var _p27 = _p17._0;
+           var updateFunc = function (content) {    return _U.eq(content,_p27) ? _U.update(_p27,{text: _p17._1}) : content;};
+           var updateContactModel = F2(function (_p25,contactModel) {
+              var _p26 = _p25;
+              var contentList = _p26._0(contactModel);
+              var updatedContentList = _U.eq(contactModel.id,_p27.contact) ? A2($List.map,updateFunc,contentList) : contentList;
+              return A2(_p26._1,contactModel,updatedContentList);
            });
            var updateFuncs = _U.list([{ctor: "_Tuple2"
                                       ,_0: function (con) {
@@ -12073,6 +12120,12 @@ Elm.ContactBook.make = function (_elm) {
                                     ,ModifyCategoryName: ModifyCategoryName
                                     ,ModifyCategoryColor: ModifyCategoryColor
                                     ,AddContact: AddContact
+                                    ,AddAddress: AddAddress
+                                    ,AddPhone: AddPhone
+                                    ,AddEmail: AddEmail
+                                    ,RemoveAddress: RemoveAddress
+                                    ,RemovePhone: RemovePhone
+                                    ,RemoveEmail: RemoveEmail
                                     ,RemoveContact: RemoveContact
                                     ,ModifyContactName: ModifyContactName
                                     ,ModifyContactBirthday: ModifyContactBirthday
@@ -12091,7 +12144,7 @@ Elm.ContactBook.make = function (_elm) {
                                     ,viewAllContacts: viewAllContacts
                                     ,viewForContact: viewForContact
                                     ,viewForContactContent: viewForContactContent
-                                    ,listStyle: listStyle
+                                    ,maxContentId: maxContentId
                                     ,queryUpdateMessage: queryUpdateMessage
                                     ,filterField: filterField
                                     ,indexButton: indexButton
