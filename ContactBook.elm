@@ -502,14 +502,16 @@ viewForContact address contact =
 
     birthdayField = field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactBirthday contact.id))) "Birthday" contact.birthday
 
-    contentViewMapper = viewForContactContent address
 
     buildDL =
       List.map (\ (name, value) -> li [] [h4 [] [text(name)], div [class "info"] [value]])
 
-    addresses = List.map contentViewMapper contact.addresses
-    phones = List.map contentViewMapper contact.phones
-    mails = List.map contentViewMapper contact.emails
+    contentViewMapper remAddress content remText =
+       viewForContactContent address content (button [onClick remAddress] [text remText])
+
+    addresses = List.map (\content -> contentViewMapper (RemoveAddress contact.id content.id) content "Remove Address") contact.addresses
+    phones = List.map (\content -> contentViewMapper (RemoveAddress contact.id content.id) content "Remove Address") contact.phones
+    mails = List.map (\content -> contentViewMapper (RemoveAddress contact.id content.id) content "Remove Address") contact.emails
 
     deleteButton = button [onClick address (RemoveContact contact.id)] [ text "Delete" ]
 
@@ -530,9 +532,12 @@ viewForContact address contact =
   in
     li [] [ ul [class "contact"] (buildDL dLC) ]
 
-viewForContactContent : Signal.Address Action -> ContactContent -> Html
-viewForContactContent address content =
-  li [] [ fromElement (field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactContent content))) "content" content.text) ]
+viewForContactContent : Signal.Address Action -> ContactContent -> Html -> Html
+viewForContactContent address content removeButton =
+  li []
+    [ fromElement (field defaultStyle (Signal.message (Signal.forwardTo address (ModifyContactContent content))) "content" content.text)
+    , removeButton
+    ]
 
 
 -- STYLES
