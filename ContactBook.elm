@@ -676,24 +676,43 @@ contactHasContent : String -> Contact -> Bool
 contactHasContent query contact =
   let
     contentContactFilter content =
-      stringHasContent query content.text.string
+      List.map (\c -> c.text.string) content
 
     inCategory = case contact.categoryObject of
-      Just cat -> categoryHasContent query cat
-      Nothing -> False
+      Just category -> [ category.name.string, category.color.string]
+      Nothing -> []
 
-  in
-    stringsHaveContent query
+    searchableTerms =
       [ contact.name.string
       , contact.company.string
       , contact.birthday.string]
-    || List.any contentContactFilter contact.addresses
-    || List.any contentContactFilter contact.emails
-    || List.any contentContactFilter contact.phones
-    || inCategory
+      |> List.append inCategory
+      |> List.append (contentContactFilter contact.addresses)
+      |> List.append (contentContactFilter contact.emails)
+      |> List.append (contentContactFilter contact.phones)
+  in
+    stringsHaveContent query searchableTerms
 
 stringsHaveContent : String -> List String -> Bool
-stringsHaveContent query strings = List.any (stringHasContent query) strings
+stringsHaveContent query strings =
+  let
+    filterEmpty list = case List.length list of
+      1 -> list
+      _ -> List.filter (\word -> word /= "") list
+    words = String.split " " query
+      |> filterEmpty
+    splitAnds word =
+      if String.contains "+" word then
+        String.split "+" word
+      else
+        [word]
+
+    andWords = List.map splitAnds words
+
+    sayWhen andWord =
+      List.all (\word -> List.any (stringHasContent word) strings) andWord
+  in
+    List.any sayWhen andWords
 
 stringHasContent : String -> String -> Bool
 stringHasContent query string =
