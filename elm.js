@@ -12916,10 +12916,19 @@ Elm.ContactBook.make = function (_elm) {
       $String.toLower(string));
    });
    var stringsHaveContent = F2(function (query,strings) {
+      var switchNegative = function (word) {
+         return A2($String.startsWith,"-",word) ? A2($List.all,
+         function (_p0) {
+            return $Basics.not(A2(stringHasContent,
+            A2($String.dropLeft,1,word),
+            _p0));
+         },
+         strings) : A2($List.any,stringHasContent(word),strings);
+      };
       var sayWhen = function (andWord) {
          return A2($List.all,
          function (word) {
-            return A2($List.any,stringHasContent(word),strings);
+            return switchNegative(word);
          },
          andWord);
       };
@@ -12929,8 +12938,8 @@ Elm.ContactBook.make = function (_elm) {
          word) : _U.list([word]);
       };
       var filterEmpty = function (list) {
-         var _p0 = $List.length(list);
-         if (_p0 === 1) {
+         var _p1 = $List.length(list);
+         if (_p1 === 1) {
                return list;
             } else {
                return A2($List.filter,
@@ -12946,10 +12955,10 @@ Elm.ContactBook.make = function (_elm) {
    });
    var contactHasContent = F2(function (query,contact) {
       var inCategory = function () {
-         var _p1 = contact.categoryObject;
-         if (_p1.ctor === "Just") {
-               var _p2 = _p1._0;
-               return _U.list([_p2.name.string,_p2.color.string]);
+         var _p2 = contact.categoryObject;
+         if (_p2.ctor === "Just") {
+               var _p3 = _p2._0;
+               return _U.list([_p3.name.string,_p3.color.string]);
             } else {
                return _U.list([]);
             }
@@ -13103,14 +13112,14 @@ Elm.ContactBook.make = function (_elm) {
          content);
       },
       contact.emails);
-      var buildDL = $List.map(function (_p3) {
-         var _p4 = _p3;
+      var buildDL = $List.map(function (_p4) {
+         var _p5 = _p4;
          return A2($Html.li,
          _U.list([]),
-         _U.list([A2($Html.h4,_U.list([]),_U.list([$Html.text(_p4._0)]))
+         _U.list([A2($Html.h4,_U.list([]),_U.list([$Html.text(_p5._0)]))
                  ,A2($Html.div,
                  _U.list([$Html$Attributes.$class("info")]),
-                 _U.list([_p4._1]))]));
+                 _U.list([_p5._1]))]));
       });
       var birthdayField = A4($Graphics$Input$Field.field,
       $Graphics$Input$Field.defaultStyle,
@@ -13161,9 +13170,9 @@ Elm.ContactBook.make = function (_elm) {
                                 ,addEmailButton
                                 ,addPhoneButton]))}]);
       var dLC = function () {
-         var _p5 = contact.categoryObject;
-         if (_p5.ctor === "Just") {
-               var _p6 = _p5._0;
+         var _p6 = contact.categoryObject;
+         if (_p6.ctor === "Just") {
+               var _p7 = _p6._0;
                return A2($List.append,
                dL,
                _U.list([{ctor: "_Tuple2"
@@ -13174,9 +13183,9 @@ Elm.ContactBook.make = function (_elm) {
                                 _U.list([$Html$Attributes.$class("color")
                                         ,$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
                                                                          ,_0: "background-color"
-                                                                         ,_1: _p6.color.string}]))]),
+                                                                         ,_1: _p7.color.string}]))]),
                                 _U.list([]))
-                                ,$Html.text(_p6.name.string)]))}]));
+                                ,$Html.text(_p7.name.string)]))}]));
             } else {
                return dL;
             }
@@ -13433,17 +13442,17 @@ Elm.ContactBook.make = function (_elm) {
    });
    var viewAllContacts = F2(function (address,model) {
       var filteredContacts = A2($List.filter,
-      function (_p7) {
+      function (_p8) {
          return A2(contactHasContent,
          model.filterQuery.string,
-         A2(contactWithCategory,model,_p7));
+         A2(contactWithCategory,model,_p8));
       },
       model.contacts);
       var contactsHtml = A2($List.map,
-      function (_p8) {
+      function (_p9) {
          return A2(viewForContact,
          address,
-         A2(contactWithCategory,model,_p8));
+         A2(contactWithCategory,model,_p9));
       },
       filteredContacts);
       return A2($Html.div,
@@ -13513,17 +13522,17 @@ Elm.ContactBook.make = function (_elm) {
               ,A2($Html.hr,_U.list([]),_U.list([]))
               ,A2($Html.ul,_U.list([]),categories)]));
    });
-   var initCategory = function (_p9) {
-      var _p10 = _p9;
+   var initCategory = function (_p10) {
+      var _p11 = _p10;
       var emptySelection = A3($Graphics$Input$Field.Selection,
       0,
       0,
       $Graphics$Input$Field.Forward);
       return {name: A2($Graphics$Input$Field.Content,
-             _p10._0,
+             _p11._0,
              emptySelection)
-             ,color: A2($Graphics$Input$Field.Content,_p10._1,emptySelection)
-             ,id: _p10._2};
+             ,color: A2($Graphics$Input$Field.Content,_p11._1,emptySelection)
+             ,id: _p11._2};
    };
    var emptySelection = A3($Graphics$Input$Field.Selection,
    0,
@@ -13534,27 +13543,27 @@ Elm.ContactBook.make = function (_elm) {
              ,contact: contact
              ,text: A2($Graphics$Input$Field.Content,text,emptySelection)};
    });
-   var initContact = F2(function (id,_p11) {
-      var _p12 = _p11;
+   var initContact = F2(function (id,_p12) {
+      var _p13 = _p12;
       var contentInitializer = initContactContent(id);
       var newAddresses = A2($List.indexedMap,
       contentInitializer,
-      _p12._2);
-      var newPhones = A2($List.indexedMap,contentInitializer,_p12._3);
-      var newMails = A2($List.indexedMap,contentInitializer,_p12._4);
+      _p13._2);
+      var newPhones = A2($List.indexedMap,contentInitializer,_p13._3);
+      var newMails = A2($List.indexedMap,contentInitializer,_p13._4);
       return {name: A2($Graphics$Input$Field.Content,
-             _p12._0,
+             _p13._0,
              emptySelection)
              ,company: A2($Graphics$Input$Field.Content,
-             _p12._1,
+             _p13._1,
              emptySelection)
              ,addresses: newAddresses
              ,phones: newPhones
              ,emails: newMails
              ,birthday: A2($Graphics$Input$Field.Content,
-             _p12._5,
+             _p13._5,
              emptySelection)
-             ,category: _p12._6
+             ,category: _p13._6
              ,categoryObject: $Maybe.Nothing
              ,id: id};
    });
@@ -13582,24 +13591,24 @@ Elm.ContactBook.make = function (_elm) {
                    $Graphics$Input$Field.Forward))
                    ,viewMode: Index}
               ,_1: $Effects.none};
-   var processImport = function (_p13) {
-      var _p14 = _p13;
-      var _p19 = _p14._1;
-      var _p18 = _p14._0;
-      var indexRange = _U.range(0,$List.length(_p19));
-      var newContacts = A3($List.map2,initContact,indexRange,_p19);
+   var processImport = function (_p14) {
+      var _p15 = _p14;
+      var _p20 = _p15._1;
+      var _p19 = _p15._0;
+      var indexRange = _U.range(0,$List.length(_p20));
+      var newContacts = A3($List.map2,initContact,indexRange,_p20);
       var newNextContactID = $List.length(indexRange);
       var ids = A2($List.map,
-      function (_p15) {
-         var _p16 = _p15;
-         return _p16._2;
+      function (_p16) {
+         var _p17 = _p16;
+         return _p17._2;
       },
-      _p18);
+      _p19);
       var catMaxId = A2($Maybe.withDefault,0,$List.maximum(ids));
-      var newCategories = A2($List.map,initCategory,_p18);
-      var _p17 = init;
-      var newModel = _p17._0;
-      var newAction = _p17._1;
+      var newCategories = A2($List.map,initCategory,_p19);
+      var _p18 = init;
+      var newModel = _p18._0;
+      var newAction = _p18._1;
       return {ctor: "_Tuple2"
              ,_0: _U.update(newModel,
              {categories: newCategories
@@ -13689,11 +13698,11 @@ Elm.ContactBook.make = function (_elm) {
    });
    var view = F2(function (address,model) {
       var viewFinder = function () {
-         var _p20 = model.viewMode;
-         switch (_p20.ctor)
+         var _p21 = model.viewMode;
+         switch (_p21.ctor)
          {case "Index": return viewIndex;
-            case "ViewCategory": return viewCategory(_p20._0);
-            case "ViewEmailList": return viewEmailList(_p20._0);
+            case "ViewCategory": return viewCategory(_p21._0);
+            case "ViewEmailList": return viewEmailList(_p21._0);
             case "ViewAllContacts": return viewAllContacts;
             case "ViewAllCompanies": return viewCompanies;
             case "ViewTLDs": return viewTLDs;
@@ -13706,8 +13715,8 @@ Elm.ContactBook.make = function (_elm) {
    ProcessImport,
    $Task.toMaybe(A2($Http.get,contactBookDecoder,importUrl))));
    var update = F2(function (action,model) {
-      var _p21 = action;
-      switch (_p21.ctor)
+      var _p22 = action;
+      switch (_p22.ctor)
       {case "Insert":
          var newCategory = initCategory(A3(F3(function (v0,v1,v2) {
               return {ctor: "_Tuple3",_0: v0,_1: v1,_2: v2};
@@ -13727,30 +13736,30 @@ Elm.ContactBook.make = function (_elm) {
                                     ,_0: model
                                     ,_1: getContacts};
          case "ProcessImport": var newModel = function () {
-              var _p22 = _p21._0;
-              if (_p22.ctor === "Just") {
-                    return processImport(_p22._0);
+              var _p23 = _p22._0;
+              if (_p23.ctor === "Just") {
+                    return processImport(_p23._0);
                  } else {
                     return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
                  }
            }();
            return newModel;
          case "Filter": return {ctor: "_Tuple2"
-                               ,_0: _U.update(model,{filterQuery: _p21._0})
+                               ,_0: _U.update(model,{filterQuery: _p22._0})
                                ,_1: $Effects.none};
          case "RemoveCategory": return {ctor: "_Tuple2"
                                        ,_0: _U.update(model,
                                        {categories: A2($List.filter,
                                        function (cat) {
-                                          return !_U.eq(_p21._0,cat.id);
+                                          return !_U.eq(_p22._0,cat.id);
                                        },
                                        model.categories)})
                                        ,_1: $Effects.none};
          case "ModifyCategoryName":
          var updateCat = function (categoryModel) {
               return _U.eq(categoryModel.id,
-              _p21._0) ? _U.update(categoryModel,
-              {name: _p21._1}) : categoryModel;
+              _p22._0) ? _U.update(categoryModel,
+              {name: _p22._1}) : categoryModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
@@ -13759,8 +13768,8 @@ Elm.ContactBook.make = function (_elm) {
          case "ModifyCategoryColor":
          var updateCat = function (categoryModel) {
               return _U.eq(categoryModel.id,
-              _p21._0) ? _U.update(categoryModel,
-              {color: _p21._1}) : categoryModel;
+              _p22._0) ? _U.update(categoryModel,
+              {color: _p22._1}) : categoryModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
@@ -13770,10 +13779,10 @@ Elm.ContactBook.make = function (_elm) {
                                   ,_0: _U.update(model,{viewMode: Index})
                                   ,_1: $Effects.none};
          case "ShowCategory": return {ctor: "_Tuple2"
-                                     ,_0: _U.update(model,{viewMode: ViewCategory(_p21._0)})
+                                     ,_0: _U.update(model,{viewMode: ViewCategory(_p22._0)})
                                      ,_1: $Effects.none};
          case "ShowEmailList": return {ctor: "_Tuple2"
-                                      ,_0: _U.update(model,{viewMode: ViewEmailList(_p21._0)})
+                                      ,_0: _U.update(model,{viewMode: ViewEmailList(_p22._0)})
                                       ,_1: $Effects.none};
          case "ShowAllContacts": return {ctor: "_Tuple2"
                                         ,_0: _U.update(model,{viewMode: ViewAllContacts})
@@ -13796,7 +13805,7 @@ Elm.ContactBook.make = function (_elm) {
            ,_3: _U.list([])
            ,_4: _U.list([])
            ,_5: ""
-           ,_6: _p21._0.id});
+           ,_6: _p22._0.id});
            var newContacts = A2($Basics._op["++"],
            _U.list([newContact]),
            model.contacts);
@@ -13804,10 +13813,10 @@ Elm.ContactBook.make = function (_elm) {
                   ,_0: _U.update(model,
                   {contacts: newContacts,nextContactID: model.nextContactID + 1})
                   ,_1: $Effects.none};
-         case "AddAddress": var _p23 = _p21._0;
+         case "AddAddress": var _p24 = _p22._0;
            var contacts = A2($List.filter,
            function (con) {
-              return _U.eq(_p23,con.id);
+              return _U.eq(_p24,con.id);
            },
            model.contacts);
            var oldAddresses = $List.concat(A2($List.map,
@@ -13817,22 +13826,22 @@ Elm.ContactBook.make = function (_elm) {
            contacts));
            var newAddresses = A2($List._op["::"],
            A3(initContactContent,
-           _p23,
+           _p24,
            maxContentId(oldAddresses) + 1,
            "Address"),
            oldAddresses);
            var updateContact = function (contactModel) {
-              return _U.eq(contactModel.id,_p23) ? _U.update(contactModel,
+              return _U.eq(contactModel.id,_p24) ? _U.update(contactModel,
               {addresses: newAddresses}) : contactModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
                   {contacts: A2($List.map,updateContact,model.contacts)})
                   ,_1: $Effects.none};
-         case "AddPhone": var _p24 = _p21._0;
+         case "AddPhone": var _p25 = _p22._0;
            var contacts = A2($List.filter,
            function (con) {
-              return _U.eq(_p24,con.id);
+              return _U.eq(_p25,con.id);
            },
            model.contacts);
            var oldPhones = $List.concat(A2($List.map,
@@ -13841,20 +13850,20 @@ Elm.ContactBook.make = function (_elm) {
            },
            contacts));
            var newPhones = A2($List._op["::"],
-           A3(initContactContent,_p24,maxContentId(oldPhones) + 1,"Phone"),
+           A3(initContactContent,_p25,maxContentId(oldPhones) + 1,"Phone"),
            oldPhones);
            var updateContact = function (contactModel) {
-              return _U.eq(contactModel.id,_p24) ? _U.update(contactModel,
+              return _U.eq(contactModel.id,_p25) ? _U.update(contactModel,
               {phones: newPhones}) : contactModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
                   {contacts: A2($List.map,updateContact,model.contacts)})
                   ,_1: $Effects.none};
-         case "AddEmail": var _p25 = _p21._0;
+         case "AddEmail": var _p26 = _p22._0;
            var contacts = A2($List.filter,
            function (con) {
-              return _U.eq(_p25,con.id);
+              return _U.eq(_p26,con.id);
            },
            model.contacts);
            var oldEmails = $List.concat(A2($List.map,
@@ -13863,20 +13872,20 @@ Elm.ContactBook.make = function (_elm) {
            },
            contacts));
            var newEmails = A2($List._op["::"],
-           A3(initContactContent,_p25,maxContentId(oldEmails) + 1,"Email"),
+           A3(initContactContent,_p26,maxContentId(oldEmails) + 1,"Email"),
            oldEmails);
            var updateContact = function (contactModel) {
-              return _U.eq(contactModel.id,_p25) ? _U.update(contactModel,
+              return _U.eq(contactModel.id,_p26) ? _U.update(contactModel,
               {emails: newEmails}) : contactModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
                   {contacts: A2($List.map,updateContact,model.contacts)})
                   ,_1: $Effects.none};
-         case "RemoveAddress": var _p26 = _p21._0;
+         case "RemoveAddress": var _p27 = _p22._0;
            var contacts = A2($List.filter,
            function (con) {
-              return _U.eq(_p26,con.id);
+              return _U.eq(_p27,con.id);
            },
            model.contacts);
            var oldAddresses = $List.concat(A2($List.map,
@@ -13886,21 +13895,21 @@ Elm.ContactBook.make = function (_elm) {
            contacts));
            var newAddresses = A2($List.filter,
            function (con) {
-              return !_U.eq(_p21._1,con.id);
+              return !_U.eq(_p22._1,con.id);
            },
            oldAddresses);
            var updateContact = function (contactModel) {
-              return _U.eq(contactModel.id,_p26) ? _U.update(contactModel,
+              return _U.eq(contactModel.id,_p27) ? _U.update(contactModel,
               {addresses: newAddresses}) : contactModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
                   {contacts: A2($List.map,updateContact,model.contacts)})
                   ,_1: $Effects.none};
-         case "RemoveEmail": var _p27 = _p21._0;
+         case "RemoveEmail": var _p28 = _p22._0;
            var contacts = A2($List.filter,
            function (con) {
-              return _U.eq(_p27,con.id);
+              return _U.eq(_p28,con.id);
            },
            model.contacts);
            var oldEmails = $List.concat(A2($List.map,
@@ -13910,21 +13919,21 @@ Elm.ContactBook.make = function (_elm) {
            contacts));
            var newEmails = A2($List.filter,
            function (con) {
-              return !_U.eq(_p21._1,con.id);
+              return !_U.eq(_p22._1,con.id);
            },
            oldEmails);
            var updateContact = function (contactModel) {
-              return _U.eq(contactModel.id,_p27) ? _U.update(contactModel,
+              return _U.eq(contactModel.id,_p28) ? _U.update(contactModel,
               {emails: newEmails}) : contactModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
                   {contacts: A2($List.map,updateContact,model.contacts)})
                   ,_1: $Effects.none};
-         case "RemovePhone": var _p28 = _p21._0;
+         case "RemovePhone": var _p29 = _p22._0;
            var contacts = A2($List.filter,
            function (con) {
-              return _U.eq(_p28,con.id);
+              return _U.eq(_p29,con.id);
            },
            model.contacts);
            var oldPhones = $List.concat(A2($List.map,
@@ -13934,11 +13943,11 @@ Elm.ContactBook.make = function (_elm) {
            contacts));
            var newPhones = A2($List.filter,
            function (con) {
-              return !_U.eq(_p21._1,con.id);
+              return !_U.eq(_p22._1,con.id);
            },
            oldPhones);
            var updateContact = function (contactModel) {
-              return _U.eq(contactModel.id,_p28) ? _U.update(contactModel,
+              return _U.eq(contactModel.id,_p29) ? _U.update(contactModel,
               {phones: newPhones}) : contactModel;
            };
            return {ctor: "_Tuple2"
@@ -13949,15 +13958,15 @@ Elm.ContactBook.make = function (_elm) {
                                       ,_0: _U.update(model,
                                       {contacts: A2($List.filter,
                                       function (con) {
-                                         return !_U.eq(_p21._0,con.id);
+                                         return !_U.eq(_p22._0,con.id);
                                       },
                                       model.contacts)})
                                       ,_1: $Effects.none};
          case "ModifyContactName":
          var updateContact = function (contactModel) {
               return _U.eq(contactModel.id,
-              _p21._0) ? _U.update(contactModel,
-              {name: _p21._1}) : contactModel;
+              _p22._0) ? _U.update(contactModel,
+              {name: _p22._1}) : contactModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
@@ -13966,8 +13975,8 @@ Elm.ContactBook.make = function (_elm) {
          case "ModifyContactBirthday":
          var updateContact = function (contactModel) {
               return _U.eq(contactModel.id,
-              _p21._0) ? _U.update(contactModel,
-              {birthday: _p21._1}) : contactModel;
+              _p22._0) ? _U.update(contactModel,
+              {birthday: _p22._1}) : contactModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
@@ -13976,26 +13985,26 @@ Elm.ContactBook.make = function (_elm) {
          case "ModifyContactCompany":
          var updateContact = function (contactModel) {
               return _U.eq(contactModel.id,
-              _p21._0) ? _U.update(contactModel,
-              {company: _p21._1}) : contactModel;
+              _p22._0) ? _U.update(contactModel,
+              {company: _p22._1}) : contactModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
                   {contacts: A2($List.map,updateContact,model.contacts)})
                   ,_1: $Effects.none};
-         default: var _p31 = _p21._0;
+         default: var _p32 = _p22._0;
            var updateFunc = function (content) {
-              return _U.eq(content,_p31) ? _U.update(_p31,
-              {text: _p21._1}) : content;
+              return _U.eq(content,_p32) ? _U.update(_p32,
+              {text: _p22._1}) : content;
            };
-           var updateContactModel = F2(function (_p29,contactModel) {
-              var _p30 = _p29;
-              var contentList = _p30._0(contactModel);
+           var updateContactModel = F2(function (_p30,contactModel) {
+              var _p31 = _p30;
+              var contentList = _p31._0(contactModel);
               var updatedContentList = _U.eq(contactModel.id,
-              _p31.contact) ? A2($List.map,
+              _p32.contact) ? A2($List.map,
               updateFunc,
               contentList) : contentList;
-              return A2(_p30._1,contactModel,updatedContentList);
+              return A2(_p31._1,contactModel,updatedContentList);
            });
            var updateFuncs = _U.list([{ctor: "_Tuple2"
                                       ,_0: function (con) {

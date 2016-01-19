@@ -709,8 +709,14 @@ stringsHaveContent query strings =
 
     andWords = List.map splitAnds words
 
+    switchNegative word =
+      if String.startsWith "-" word then
+        List.all (stringHasContent (String.dropLeft 1 word) >> not) strings
+      else
+        List.any (stringHasContent word) strings
+
     sayWhen andWord =
-      List.all (\word -> List.any (stringHasContent word) strings) andWord
+      List.all (\word -> switchNegative word) andWord
   in
     List.any sayWhen andWords
 
